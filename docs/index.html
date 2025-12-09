@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>simple_http - Simple HTTP Client Library</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        h1 { color: var(--primary); margin-bottom: 0.5rem; }
+        h2 { margin-top: 2rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+        h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        p { margin-bottom: 1rem; }
+        code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        pre code { background: none; padding: 0; }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        ul { margin-bottom: 1rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        a { color: var(--primary); }
+        a:hover { color: var(--primary-dark); }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { font-weight: 600; }
+    </style>
+</head>
+<body>
+    <h1>simple_http</h1>
+    <p><span class="badge badge-blue">Network Layer</span><span class="badge badge-green">Void-Safe</span></p>
+    <p>Easy HTTP client for making web requests in Eiffel applications.</p>
+
+    <h2>Features</h2>
+    <ul>
+        <li>Simple GET, POST, PUT, DELETE, HEAD, PATCH requests</li>
+        <li>Configurable timeouts</li>
+        <li>Response status helpers (is_success, is_redirect, etc.)</li>
+        <li>Header access and parsing</li>
+        <li>Response body handling</li>
+        <li>Error detection and messages</li>
+    </ul>
+
+    <h2>Installation</h2>
+    <p>Add to your ECF file:</p>
+    <pre><code>&lt;library name="simple_http" location="$SIMPLE_HTTP\simple_http.ecf"/&gt;</code></pre>
+
+    <h2>Quick Start</h2>
+    <pre><code>class MY_APP
+create
+    make
+
+feature
+    make
+        local
+            http: SIMPLE_HTTP
+            response: SIMPLE_HTTP_RESPONSE
+        do
+            create http.make
+            http.set_timeout (60)  -- 60 seconds
+
+            -- GET request
+            response := http.get ("https://api.example.com/users")
+            if response.is_success then
+                print ("Got: " + response.body_string)
+            end
+
+            -- POST request with data
+            response := http.post ("https://api.example.com/users",
+                "{%"name%": %"John%"}")
+            print ("Status: " + response.status.out)
+        end
+end</code></pre>
+
+    <h2>API Reference</h2>
+
+    <h3>SIMPLE_HTTP</h3>
+    <table>
+        <tr><th>Feature</th><th>Description</th></tr>
+        <tr><td><code>make</code></td><td>Create HTTP client</td></tr>
+        <tr><td><code>get (url): SIMPLE_HTTP_RESPONSE</code></td><td>Perform GET request</td></tr>
+        <tr><td><code>post (url, data): SIMPLE_HTTP_RESPONSE</code></td><td>Perform POST request</td></tr>
+        <tr><td><code>put (url, data): SIMPLE_HTTP_RESPONSE</code></td><td>Perform PUT request</td></tr>
+        <tr><td><code>delete (url): SIMPLE_HTTP_RESPONSE</code></td><td>Perform DELETE request</td></tr>
+        <tr><td><code>head (url): SIMPLE_HTTP_RESPONSE</code></td><td>Perform HEAD request</td></tr>
+        <tr><td><code>patch (url, data): SIMPLE_HTTP_RESPONSE</code></td><td>Perform PATCH request</td></tr>
+        <tr><td><code>set_timeout (seconds)</code></td><td>Set request timeout</td></tr>
+        <tr><td><code>set_connect_timeout (seconds)</code></td><td>Set connection timeout</td></tr>
+        <tr><td><code>is_success: BOOLEAN</code></td><td>Was last request 2xx?</td></tr>
+        <tr><td><code>has_error: BOOLEAN</code></td><td>Did error occur?</td></tr>
+    </table>
+
+    <h3>SIMPLE_HTTP_RESPONSE</h3>
+    <table>
+        <tr><th>Feature</th><th>Description</th></tr>
+        <tr><td><code>status: INTEGER</code></td><td>HTTP status code</td></tr>
+        <tr><td><code>body: detachable STRING</code></td><td>Response body</td></tr>
+        <tr><td><code>body_string: STRING</code></td><td>Body as non-void string</td></tr>
+        <tr><td><code>header (name): detachable STRING</code></td><td>Get header value</td></tr>
+        <tr><td><code>content_type: detachable STRING</code></td><td>Content-Type header</td></tr>
+        <tr><td><code>content_length: INTEGER</code></td><td>Content-Length header</td></tr>
+        <tr><td><code>is_success: BOOLEAN</code></td><td>Status 200-299?</td></tr>
+        <tr><td><code>is_redirect: BOOLEAN</code></td><td>Status 300-399?</td></tr>
+        <tr><td><code>is_client_error: BOOLEAN</code></td><td>Status 400-499?</td></tr>
+        <tr><td><code>is_server_error: BOOLEAN</code></td><td>Status 500-599?</td></tr>
+        <tr><td><code>has_error: BOOLEAN</code></td><td>Transport error?</td></tr>
+        <tr><td><code>error_message: detachable STRING</code></td><td>Error description</td></tr>
+    </table>
+
+    <h2>Response Handling Example</h2>
+    <pre><code>response := http.get ("https://api.example.com/data")
+
+if response.is_success then
+    print ("Success! Body: " + response.body_string)
+elseif response.is_client_error then
+    print ("Client error: " + response.status.out)
+elseif response.is_server_error then
+    print ("Server error: " + response.status.out)
+elseif response.has_error then
+    if attached response.error_message as msg then
+        print ("Error: " + msg)
+    end
+end
+
+-- Check specific headers
+if attached response.content_type as ct then
+    print ("Content-Type: " + ct)
+end</code></pre>
+
+    <h2>Dependencies</h2>
+    <ul>
+        <li><code>base</code> - EiffelStudio base library</li>
+        <li><code>net_http_client</code> - EiffelStudio HTTP client (contrib)</li>
+    </ul>
+
+    <h2>Links</h2>
+    <ul>
+        <li><a href="https://github.com/simple-eiffel/simple_http">GitHub Repository</a></li>
+        <li><a href="https://simple-eiffel.github.io">Simple Eiffel Ecosystem</a></li>
+    </ul>
+
+    <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-light); font-size: 0.875rem;">
+        <p>Part of the <a href="https://simple-eiffel.github.io">simple_* ecosystem</a> | MIT License</p>
+    </footer>
+</body>
+</html>
