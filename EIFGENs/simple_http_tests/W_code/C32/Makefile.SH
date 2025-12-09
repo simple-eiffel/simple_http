@@ -11,7 +11,7 @@ case "$O" in
 esac
 echo "Compiling C code in C32"
 $spitshell >Makefile <<!GROK!THIS!
-INCLUDE_PATH =  -I"\$(ISE_LIBRARY)\library\time\spec\include" -I"\$(ISE_LIBRARY)\library\process\base\platform\windows\include" -I"\$(ISE_LIBRARY)\library\wel\spec\windows\include"
+INCLUDE_PATH =  -I"\$(ISE_LIBRARY)\library\time\spec\include" -I"\$(ISE_LIBRARY)/library/runtime/logging/Clib" -I"\$(ISE_LIBRARY)\library\process\base\platform\windows\include" -I"\$(ISE_LIBRARY)\library\wel\spec\windows\include"
 SHELL = /bin/sh
 CC = $cc
 CPP = $cpp
@@ -58,7 +58,13 @@ OBJECTS = big_file_C32_c.obj
 OLDOBJECTS =  ce1033.o ce1033d.o ce1034.o ce1034d.o rt1023.o rt1023d.o rt1024.o \
 	rt1024d.o rt1025.o rt1025d.o rt1026.o rt1026d.o rt1027.o rt1027d.o \
 	rt1029.o rt1029d.o rt1030.o rt1030d.o rt1031.o rt1031d.o rt1032.o \
-	rt1032d.o rt1028.o rt1028d.o 
+	rt1032d.o rt1028.o rt1028d.o te1036.o te1036d.o eq1035.o eq1035d.o \
+	si1046.o si1046d.o si1040.o si1040d.o si1044.o si1044d.o si1050.o \
+	si1050d.o si1045.o si1045d.o si1049.o si1049d.o si1039.o si1039d.o \
+	si1038.o si1038d.o si1051.o si1051d.o si1055.o si1055d.o si1054.o \
+	si1054d.o si1053.o si1053d.o si1052.o si1052d.o si1037.o si1037d.o \
+	si1047.o si1047d.o js1043.o js1043d.o si1048.o si1048d.o js1042.o \
+	js1042d.o js1041.o js1041d.o 
 
 all: Cobj32.o
 

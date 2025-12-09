@@ -100,7 +100,9 @@ char *names25 [] =
 "raw_header",
 "error_message",
 "headers",
+"cached_json",
 "error_occurred",
+"json_parsed",
 "status",
 };
 
@@ -135,8 +137,17 @@ char *names35 [] =
 {
 "last_response",
 "client",
+"custom_headers",
+"query_params",
+"retry_policy",
+"interceptors",
+"cookie_jar",
+"follow_redirects",
+"cookies_enabled",
 "timeout",
 "connect_timeout",
+"max_redirects",
+"retry_count",
 };
 
 char *names38 [] =
@@ -190,6 +201,7 @@ char *names65 [] =
 "file_system",
 "environment",
 "internal_asserter",
+"last_assertion_failed",
 "has_failed",
 };
 
@@ -6003,6 +6015,240 @@ char *names1033 [] =
 char *names1034 [] =
 {
 "item",
+};
+
+char *names1035 [] =
+{
+"last_assertion_failed",
+};
+
+char *names1036 [] =
+{
+"file_system",
+"environment",
+"internal_asserter",
+"last_assertion_failed",
+"has_failed",
+};
+
+char *names1037 [] =
+{
+"modified_document",
+"error_message",
+"is_success",
+};
+
+char *names1038 [] =
+{
+"message",
+"line",
+"column",
+"position",
+};
+
+char *names1039 [] =
+{
+"operations",
+};
+
+char *names1042 [] =
+{
+"representation",
+"index",
+};
+
+char *names1044 [] =
+{
+"json_value",
+};
+
+char *names1045 [] =
+{
+"json_value",
+};
+
+char *names1046 [] =
+{
+"json_value",
+};
+
+char *names1048 [] =
+{
+"segments",
+};
+
+char *names1049 [] =
+{
+"output",
+"indent_string",
+"current_indent_level",
+};
+
+char *names1050 [] =
+{
+"last_errors",
+"last_json_text",
+};
+
+char *names1051 [] =
+{
+"path",
+"value",
+"from_path",
+};
+
+char *names1052 [] =
+{
+"path",
+"value",
+"from_path",
+};
+
+char *names1053 [] =
+{
+"path",
+"value",
+"from_path",
+};
+
+char *names1054 [] =
+{
+"path",
+"value",
+"from_path",
+};
+
+char *names1055 [] =
+{
+"path",
+"value",
+"from_path",
+};
+
+char *names1056 [] =
+{
+"path",
+"value",
+"from_path",
+};
+
+char *names1057 [] =
+{
+"path",
+"value",
+"from_path",
+};
+
+char *names1059 [] =
+{
+"item",
+};
+
+char *names1060 [] =
+{
+"item",
+"numeric_type",
+};
+
+char *names1061 [] =
+{
+"items",
+};
+
+char *names1062 [] =
+{
+"items",
+};
+
+char *names1064 [] =
+{
+"item",
+};
+
+char *names1065 [] =
+{
+"representation",
+"errors",
+"parsed_json_value",
+"false_value",
+"true_value",
+"null_value",
+"buffer_json_string",
+"buffer_json_number",
+"buffer_is_number",
+"is_parsed",
+"has_error",
+"index",
+"default_array_size",
+"default_object_size",
+};
+
+char *names1066 [] =
+{
+"retryable_status_codes",
+"use_jitter",
+"retry_on_network_error",
+"max_retries",
+"initial_delay_ms",
+"max_delay_ms",
+"jitter_seed",
+};
+
+char *names1067 [] =
+{
+"area_v2",
+"object_comparison",
+"index",
+};
+
+char *names1069 [] =
+{
+"first_element",
+"active",
+"object_comparison",
+"before",
+"after",
+"count",
+};
+
+char *names1071 [] =
+{
+"object_comparison",
+};
+
+char *names1072 [] =
+{
+"object_comparison",
+};
+
+char *names1073 [] =
+{
+"object_comparison",
+};
+
+char *names1075 [] =
+{
+"cookies",
+};
+
+char *names1076 [] =
+{
+"client",
+"request_url",
+"request_method",
+"request_headers",
+"request_queries",
+"request_body",
+"request_follow_redirects",
+"request_timeout",
+"request_connect_timeout",
+"request_max_retries",
+};
+
+char *names1078 [] =
+{
+"log_prefix",
+"verbose",
 };
 
 

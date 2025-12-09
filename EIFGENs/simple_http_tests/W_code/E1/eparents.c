@@ -261,7 +261,7 @@ static EIF_TYPE_INDEX ptf63[] = {0,0xFFFF};
 static struct eif_par_types par63 = {63, ptf63, (uint16) 1, (uint16) 0, (char) 0};
 
 /* HTTP_TEST_APP */
-static EIF_TYPE_INDEX ptf64[] = {63,0xFFFF};
+static EIF_TYPE_INDEX ptf64[] = {1035,0xFFFF};
 static struct eif_par_types par64 = {64, ptf64, (uint16) 1, (uint16) 0, (char) 0};
 
 /* HOST_VALIDITY_CHECKER */
@@ -4140,7 +4140,183 @@ static struct eif_par_types par1032 = {1032, ptf1032, (uint16) 1, (uint16) 1, (c
 static EIF_TYPE_INDEX ptf1033[] = {0,0xFFFF};
 static struct eif_par_types par1033 = {1033, ptf1033, (uint16) 1, (uint16) 1, (char) 0};
 
-int egc_partab_size_init = 1033				;
+/* EQA_COMMONLY_USED_ASSERTIONS */
+static EIF_TYPE_INDEX ptf1034[] = {22,0xFFFF};
+static struct eif_par_types par1034 = {1034, ptf1034, (uint16) 1, (uint16) 0, (char) 0};
+
+/* TEST_SET_BASE */
+static EIF_TYPE_INDEX ptf1035[] = {63,0xFFF7,1034,0xFFFF};
+static struct eif_par_types par1035 = {1035, ptf1035, (uint16) 2, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PATCH_RESULT */
+static EIF_TYPE_INDEX ptf1036[] = {0,0xFFFF};
+static struct eif_par_types par1036 = {1036, ptf1036, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_ERROR */
+static EIF_TYPE_INDEX ptf1037[] = {0,0xFFFF};
+static struct eif_par_types par1037 = {1037, ptf1037, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PATCH */
+static EIF_TYPE_INDEX ptf1038[] = {0,0xFFFF};
+static struct eif_par_types par1038 = {1038, ptf1038, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_BASE64 */
+static EIF_TYPE_INDEX ptf1039[] = {0,0xFFFF};
+static struct eif_par_types par1039 = {1039, ptf1039, (uint16) 1, (uint16) 0, (char) 0};
+
+/* JSON_TOKENS */
+static EIF_TYPE_INDEX ptf1040[] = {0,0xFFFF};
+static struct eif_par_types par1040 = {1040, ptf1040, (uint16) 1, (uint16) 0, (char) 0};
+
+/* JSON_READER */
+static EIF_TYPE_INDEX ptf1041[] = {0,0xFFFF};
+static struct eif_par_types par1041 = {1041, ptf1041, (uint16) 1, (uint16) 0, (char) 0};
+
+/* JSON_VISITOR */
+static EIF_TYPE_INDEX ptf1042[] = {0,0xFFFF};
+static struct eif_par_types par1042 = {1042, ptf1042, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_VALUE */
+static EIF_TYPE_INDEX ptf1043[] = {0,0xFFFF};
+static struct eif_par_types par1043 = {1043, ptf1043, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_ARRAY */
+static EIF_TYPE_INDEX ptf1044[] = {1043,0xFFFF};
+static struct eif_par_types par1044 = {1044, ptf1044, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_OBJECT */
+static EIF_TYPE_INDEX ptf1045[] = {1043,0xFFFF};
+static struct eif_par_types par1045 = {1045, ptf1045, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_CONSTANTS */
+static EIF_TYPE_INDEX ptf1046[] = {0,0xFFFF};
+static struct eif_par_types par1046 = {1046, ptf1046, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_POINTER */
+static EIF_TYPE_INDEX ptf1047[] = {1046,0xFFFF};
+static struct eif_par_types par1047 = {1047, ptf1047, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PRETTY_PRINTER */
+static EIF_TYPE_INDEX ptf1048[] = {1042,0xFFF7,1046,0xFFFF};
+static struct eif_par_types par1048 = {1048, ptf1048, (uint16) 2, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON */
+static EIF_TYPE_INDEX ptf1049[] = {1046,0xFFFF};
+static struct eif_par_types par1049 = {1049, ptf1049, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PATCH_OPERATION */
+static EIF_TYPE_INDEX ptf1050[] = {1046,0xFFFF};
+static struct eif_par_types par1050 = {1050, ptf1050, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PATCH_COPY */
+static EIF_TYPE_INDEX ptf1051[] = {1050,0xFFFF};
+static struct eif_par_types par1051 = {1051, ptf1051, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PATCH_MOVE */
+static EIF_TYPE_INDEX ptf1052[] = {1050,0xFFFF};
+static struct eif_par_types par1052 = {1052, ptf1052, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PATCH_TEST */
+static EIF_TYPE_INDEX ptf1053[] = {1050,0xFFFF};
+static struct eif_par_types par1053 = {1053, ptf1053, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PATCH_REPLACE */
+static EIF_TYPE_INDEX ptf1054[] = {1050,0xFFFF};
+static struct eif_par_types par1054 = {1054, ptf1054, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PATCH_ADD */
+static EIF_TYPE_INDEX ptf1055[] = {1050,0xFFFF};
+static struct eif_par_types par1055 = {1055, ptf1055, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_JSON_PATCH_REMOVE */
+static EIF_TYPE_INDEX ptf1056[] = {1050,0xFFFF};
+static struct eif_par_types par1056 = {1056, ptf1056, (uint16) 1, (uint16) 0, (char) 0};
+
+/* JSON_VALUE */
+static EIF_TYPE_INDEX ptf1057[] = {240,0xFFF7,230,0xFFFF};
+static struct eif_par_types par1057 = {1057, ptf1057, (uint16) 2, (uint16) 0, (char) 0};
+
+/* JSON_BOOLEAN */
+static EIF_TYPE_INDEX ptf1058[] = {1057,0xFFFF};
+static struct eif_par_types par1058 = {1058, ptf1058, (uint16) 1, (uint16) 0, (char) 0};
+
+/* JSON_NUMBER */
+static EIF_TYPE_INDEX ptf1059[] = {1057,0xFFFF};
+static struct eif_par_types par1059 = {1059, ptf1059, (uint16) 1, (uint16) 0, (char) 0};
+
+/* JSON_ARRAY */
+static EIF_TYPE_INDEX ptf1060[] = {1057,0xFFF7,347,0xFF01,1057,0xFFF7,230,0xFFFF};
+static struct eif_par_types par1060 = {1060, ptf1060, (uint16) 3, (uint16) 0, (char) 0};
+
+/* JSON_OBJECT */
+static EIF_TYPE_INDEX ptf1061[] = {1057,0xFFF7,443,0xFF01,1057,0xFF01,1063,0xFFF7,230,0xFFFF};
+static struct eif_par_types par1061 = {1061, ptf1061, (uint16) 3, (uint16) 0, (char) 0};
+
+/* JSON_NULL */
+static EIF_TYPE_INDEX ptf1062[] = {1057,0xFFFF};
+static struct eif_par_types par1062 = {1062, ptf1062, (uint16) 1, (uint16) 0, (char) 0};
+
+/* JSON_STRING */
+static EIF_TYPE_INDEX ptf1063[] = {1057,0xFFFF};
+static struct eif_par_types par1063 = {1063, ptf1063, (uint16) 1, (uint16) 0, (char) 0};
+
+/* JSON_PARSER */
+static EIF_TYPE_INDEX ptf1064[] = {0,0xFFF7,1041,0xFFF7,1040,0xFFFF};
+static struct eif_par_types par1064 = {1064, ptf1064, (uint16) 3, (uint16) 0, (char) 0};
+
+/* SIMPLE_HTTP_RETRY_POLICY */
+static EIF_TYPE_INDEX ptf1065[] = {0,0xFFFF};
+static struct eif_par_types par1065 = {1065, ptf1065, (uint16) 1, (uint16) 0, (char) 0};
+
+/* ARRAYED_SET [INTEGER_32] */
+static EIF_TYPE_INDEX ptf1066[] = {1072,284,0xFFF7,483,284,0xFFFF};
+static struct eif_par_types par1066 = {1066, ptf1066, (uint16) 2, (uint16) 1, (char) 0};
+
+/* SUBSET_STRATEGY_GENERIC [INTEGER_32] */
+static EIF_TYPE_INDEX ptf1067[] = {1069,284,0xFFFF};
+static struct eif_par_types par1067 = {1067, ptf1067, (uint16) 1, (uint16) 1, (char) 0};
+
+/* LINKED_SET [INTEGER_32] */
+static EIF_TYPE_INDEX ptf1068[] = {1072,284,0xFFF7,700,284,0xFFFF};
+static struct eif_par_types par1068 = {1068, ptf1068, (uint16) 2, (uint16) 1, (char) 0};
+
+/* SUBSET_STRATEGY [INTEGER_32] */
+static EIF_TYPE_INDEX ptf1069[] = {0,0xFFFF};
+static struct eif_par_types par1069 = {1069, ptf1069, (uint16) 1, (uint16) 1, (char) 0};
+
+/* TRAVERSABLE_SUBSET [INTEGER_32] */
+static EIF_TYPE_INDEX ptf1070[] = {1071,284,0xFFFF};
+static struct eif_par_types par1070 = {1070, ptf1070, (uint16) 1, (uint16) 1, (char) 0};
+
+/* SUBSET [INTEGER_32] */
+static EIF_TYPE_INDEX ptf1071[] = {986,284,0xFFFF};
+static struct eif_par_types par1071 = {1071, ptf1071, (uint16) 1, (uint16) 1, (char) 0};
+
+/* LINEAR_SUBSET [INTEGER_32] */
+static EIF_TYPE_INDEX ptf1072[] = {1070,284,0xFFFF};
+static struct eif_par_types par1072 = {1072, ptf1072, (uint16) 1, (uint16) 1, (char) 0};
+
+/* SUBSET_STRATEGY_HASHABLE [INTEGER_32] */
+static EIF_TYPE_INDEX ptf1073[] = {1069,284,0xFFFF};
+static struct eif_par_types par1073 = {1073, ptf1073, (uint16) 1, (uint16) 1, (char) 0};
+
+/* SIMPLE_HTTP_COOKIE_JAR */
+static EIF_TYPE_INDEX ptf1074[] = {0,0xFFFF};
+static struct eif_par_types par1074 = {1074, ptf1074, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_HTTP_REQUEST_BUILDER */
+static EIF_TYPE_INDEX ptf1075[] = {0,0xFFFF};
+static struct eif_par_types par1075 = {1075, ptf1075, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_HTTP_INTERCEPTOR */
+static EIF_TYPE_INDEX ptf1076[] = {0,0xFFFF};
+static struct eif_par_types par1076 = {1076, ptf1076, (uint16) 1, (uint16) 0, (char) 0};
+
+/* SIMPLE_HTTP_LOGGER_INTERCEPTOR */
+static EIF_TYPE_INDEX ptf1077[] = {1076,0xFFFF};
+static struct eif_par_types par1077 = {1077, ptf1077, (uint16) 1, (uint16) 0, (char) 0};
+
+int egc_partab_size_init = 1077				;
 				struct eif_par_types *egc_partab_init[] = {
 &par0,
 &par1,
@@ -5176,6 +5352,50 @@ int egc_partab_size_init = 1033				;
 &par1031,
 &par1032,
 &par1033,
+&par1034,
+&par1035,
+&par1036,
+&par1037,
+&par1038,
+&par1039,
+&par1040,
+&par1041,
+&par1042,
+&par1043,
+&par1044,
+&par1045,
+&par1046,
+&par1047,
+&par1048,
+&par1049,
+&par1050,
+&par1051,
+&par1052,
+&par1053,
+&par1054,
+&par1055,
+&par1056,
+&par1057,
+&par1058,
+&par1059,
+&par1060,
+&par1061,
+&par1062,
+&par1063,
+&par1064,
+&par1065,
+&par1066,
+&par1067,
+&par1068,
+&par1069,
+&par1070,
+&par1071,
+&par1072,
+&par1073,
+&par1074,
+&par1075,
+&par1076,
+&par1077,
 NULL};
 
 #ifdef __cplusplus
