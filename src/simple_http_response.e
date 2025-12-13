@@ -136,7 +136,7 @@ feature -- JSON access
 			if not json_parsed then
 				if attached body as b and then not b.is_empty then
 					create l_parser
-					cached_json := l_parser.parse (b.to_string_32)
+					cached_json := l_parser.decode_payload (b.to_string_32)
 				end
 				json_parsed := True
 			end
