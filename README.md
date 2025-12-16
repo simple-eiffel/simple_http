@@ -28,7 +28,51 @@ Set the environment variable:
 SIMPLE_HTTP=/path/to/simple_http
 ```
 
-## Quick Start
+## Quick Start (Zero-Configuration)
+
+Use `SIMPLE_HTTP_QUICK` for the simplest possible HTTP operations:
+
+```eiffel
+local
+    http: SIMPLE_HTTP_QUICK
+do
+    create http.make
+
+    -- GET request returns body directly
+    print (http.get ("https://api.example.com/data"))
+
+    -- GET JSON parses automatically
+    if attached http.get_json ("https://api.example.com/users/1") as user then
+        print (user.string_item ("name"))
+    end
+
+    -- POST form data
+    print (http.post ("https://api.example.com/login", "user=alice&pass=secret"))
+
+    -- POST JSON
+    if attached {SIMPLE_JSON_VALUE} my_json as json then
+        print (http.post_json ("https://api.example.com/users", json))
+    end
+
+    -- Download file
+    if http.download ("https://example.com/file.zip", "C:\downloads\file.zip") then
+        print ("Downloaded successfully")
+    end
+
+    -- Authentication
+    http.set_bearer_token ("my-api-token")
+    http.set_basic_auth ("username", "password")
+
+    -- Error handling
+    if http.has_error then
+        print ("Error: HTTP " + http.last_status_code.out)
+    end
+end
+```
+
+## Standard API (Full Control)
+
+Use `SIMPLE_HTTP` for complete control over requests:
 
 ```eiffel
 local
@@ -45,7 +89,7 @@ do
 
     -- POST with JSON
     http.set_content_type_json
-    response := http.post ("https://api.example.com/users", 
+    response := http.post ("https://api.example.com/users",
         "{%"name%": %"John%"}")
 end
 ```
