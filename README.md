@@ -17,15 +17,15 @@ Simple HTTP client for making web requests in Eiffel applications.
 
 ## Installation
 
+Set the ecosystem environment variable (one-time setup for all simple_* libraries):
+```
+SIMPLE_EIFFEL=D:\prod
+```
+
 Add to your ECF file:
 
 ```xml
-<library name="simple_http" location="$SIMPLE_HTTP/simple_http.ecf"/>
-```
-
-Set the environment variable:
-```
-SIMPLE_HTTP=/path/to/simple_http
+<library name="simple_http" location="$SIMPLE_EIFFEL/simple_http/simple_http.ecf"/>
 ```
 
 ## Quick Start (Zero-Configuration)
