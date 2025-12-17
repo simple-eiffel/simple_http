@@ -41,7 +41,7 @@ feature {NONE} -- Initialization
 			-- Create quick HTTP client.
 		do
 			create client.make
-			create logger.make ("http_quick")
+			create logger.make_with_level ({SIMPLE_LOGGER}.Level_debug)
 		ensure
 			client_exists: client /= Void
 		end
@@ -81,7 +81,7 @@ feature -- GET Requests
 			url_not_empty: not a_url.is_empty
 		do
 			logger.debug_log ("GET " + a_url)
-			client.get (a_url)
+			client.get (a_url).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
 				Result := body
@@ -146,7 +146,7 @@ feature -- POST Requests
 		do
 			logger.debug_log ("POST " + a_url + " (" + a_body.count.out + " bytes)")
 			client.add_header ("Content-Type", "application/x-www-form-urlencoded")
-			client.post (a_url, a_body)
+			client.post (a_url, a_body).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
 				Result := body
@@ -166,7 +166,7 @@ feature -- POST Requests
 		do
 			logger.debug_log ("POST JSON " + a_url)
 			client.add_header ("Content-Type", "application/json")
-			client.post (a_url, a_json.to_json_string.to_string_8)
+			client.post (a_url, a_json.to_json_string.to_string_8).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
 				Result := body
@@ -210,7 +210,7 @@ feature -- PUT/DELETE
 			url_not_empty: not a_url.is_empty
 		do
 			logger.debug_log ("PUT " + a_url)
-			client.put (a_url, a_body)
+			client.put (a_url, a_body).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
 				Result := body
@@ -227,7 +227,7 @@ feature -- PUT/DELETE
 			url_not_empty: not a_url.is_empty
 		do
 			logger.debug_log ("DELETE " + a_url)
-			client.delete (a_url)
+			client.delete (a_url).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
 				Result := body
@@ -316,7 +316,7 @@ feature {NONE} -- Implementation
 			-- Update status from last response.
 		do
 			if attached client.last_response as resp then
-				last_status_code := resp.status_code
+				last_status_code := resp.status
 			else
 				last_status_code := 0
 			end
