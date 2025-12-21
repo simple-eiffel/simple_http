@@ -238,9 +238,9 @@ feature {NONE} -- Implementation
 				-- Extract line (trim trailing CR if present)
 				if l_end > l_start then
 					if l_end > 1 and then raw_header.item (l_end - 1) = '%R' then
-						l_line := raw_header.substring (l_start, l_end - 2)
+						l_line := raw_header.substring (l_start, l_end - 2).to_string_8
 					else
-						l_line := raw_header.substring (l_start, l_end - 1)
+						l_line := raw_header.substring (l_start, l_end - 1).to_string_8
 					end
 
 					-- Parse header line
