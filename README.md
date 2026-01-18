@@ -1,32 +1,33 @@
-# SIMPLE_HTTP
+<p align="center">
+  <img src="docs/images/logo.png" alt="simple_http logo" width="200">
+</p>
 
-Simple HTTP client for making web requests in Eiffel applications.
+<h1 align="center">simple_http</h1>
 
-## Features
+<p align="center">
+  <a href="https://simple-eiffel.github.io/simple_http/">Documentation</a> •
+  <a href="https://github.com/simple-eiffel/simple_http">GitHub</a>
+</p>
 
-- HTTP methods: GET, POST, PUT, DELETE, HEAD, PATCH
-- JSON request/response support
-- Custom headers and query parameters
+<p align="center">
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
+  <img src="https://img.shields.io/badge/Eiffel-25.02-purple.svg" alt="Eiffel 25.02">
+  <img src="https://img.shields.io/badge/DBC-Contracts-green.svg" alt="Design by Contract">
+</p>
+
+**Simple HTTP client for making web requests** — Fluent API, automatic retry, authentication. Part of the [Simple Eiffel](https://github.com/simple-eiffel) ecosystem.
+
+## Status
+
+✅ **Production Ready** — v1.0.0
+- All HTTP methods (GET, POST, PUT, DELETE, HEAD, PATCH)
 - Authentication (Bearer, Basic, API key)
 - Automatic retry with exponential backoff
-- Cookie management
-- Redirect handling
-- Request interceptors
-- Fluent request builder API
-- Timeout configuration
+- Full Design by Contract coverage
 
-## Installation
+## Overview
 
-Set the ecosystem environment variable (one-time setup for all simple_* libraries):
-```
-SIMPLE_EIFFEL=D:\prod
-```
-
-Add to your ECF file:
-
-```xml
-<library name="simple_http" location="$SIMPLE_EIFFEL/simple_http/simple_http.ecf"/>
-```
+SIMPLE_HTTP provides a clean HTTP client for Eiffel applications with JSON support, cookie management, redirect handling, and a fluent builder API. It offers both a zero-configuration quick API and a full-control standard API.
 
 ## Quick Start (Zero-Configuration)
 
@@ -94,9 +95,10 @@ do
 end
 ```
 
-## API Overview
+## API Reference
 
 ### HTTP Methods
+
 | Feature | Description |
 |---------|-------------|
 | `get (url)` | GET request |
@@ -107,6 +109,7 @@ end
 | `patch (url, data)` | PATCH request |
 
 ### Configuration
+
 | Feature | Description |
 |---------|-------------|
 | `set_timeout` | Request timeout |
@@ -116,6 +119,7 @@ end
 | `add_query` | Add query parameter |
 
 ### Authentication
+
 | Feature | Description |
 |---------|-------------|
 | `set_bearer_token` | Set Bearer auth |
@@ -123,6 +127,7 @@ end
 | `set_api_key` | Set API key header |
 
 ### Retry Support
+
 | Feature | Description |
 |---------|-------------|
 | `enable_retry` | Default retry policy |
@@ -130,6 +135,7 @@ end
 | `set_retry_policy` | Full retry configuration |
 
 ### Cookies
+
 | Feature | Description |
 |---------|-------------|
 | `enable_cookies` | Enable cookie management |
@@ -149,19 +155,47 @@ response := http.request
     .get
 ```
 
-## Documentation
+## Features
 
-- [API Documentation](https://simple-eiffel.github.io/simple_http/)
+- ✅ All HTTP methods (GET, POST, PUT, DELETE, HEAD, PATCH)
+- ✅ JSON request/response support
+- ✅ Custom headers and query parameters
+- ✅ Authentication (Bearer, Basic, API key)
+- ✅ Automatic retry with exponential backoff
+- ✅ Cookie management
+- ✅ Redirect handling
+- ✅ Request interceptors
+- ✅ Fluent request builder API
+- ✅ Design by Contract throughout
+- ✅ Void-safe
+- ✅ SCOOP-compatible
+
+## Installation
+
+Add to your ECF file:
+
+```xml
+<library name="simple_http" location="$SIMPLE_LIBS/simple_http/simple_http.ecf"/>
+```
+
+### Environment Setup
+
+Set the `SIMPLE_LIBS` environment variable:
+```bash
+export SIMPLE_LIBS=/path/to/simple/libraries
+```
 
 ## Dependencies
 
-- simple_base64 (for Basic auth)
-- simple_json (for JSON methods)
+| Library | Purpose |
+|---------|---------|
+| simple_base64 | For Basic auth encoding |
+| simple_json | For JSON methods |
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License - see [LICENSE](LICENSE) file.
 
-## Author
+---
 
-Larry Rix
+Part of the [Simple Eiffel](https://github.com/simple-eiffel) ecosystem.
