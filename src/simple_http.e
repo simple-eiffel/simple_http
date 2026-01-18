@@ -19,9 +19,9 @@ feature {NONE} -- Initialization
 			create custom_headers.make (5)
 			create query_params.make (5)
 			create interceptors.make (3)
-			timeout := 30
-			connect_timeout := 10
-			max_redirects := 10
+			timeout := Default_timeout_seconds
+			connect_timeout := Default_connect_timeout_seconds
+			max_redirects := Default_max_redirects
 			follow_redirects := True
 			create retry_policy.make_none
 			cookies_enabled := False
@@ -118,7 +118,7 @@ feature -- Retry Settings
 		require
 			positive: a_max_retries > 0
 		do
-			create retry_policy.make_custom (a_max_retries, 100, 30000, True)
+			create retry_policy.make_custom (a_max_retries, Default_initial_delay_ms, Default_max_delay_ms, True)
 		end
 
 	disable_retry
@@ -148,14 +148,14 @@ feature -- Header management
 			headers_not_void: a_headers /= Void
 		local
 			l_keys: ARRAY [STRING]
-			i: INTEGER
+			l_i: INTEGER
 		do
 			l_keys := a_headers.current_keys
-			from i := l_keys.lower until i > l_keys.upper loop
-				if attached a_headers.item (l_keys.item (i)) as v then
-					custom_headers.force (v, l_keys.item (i))
+			from l_i := l_keys.lower until l_i > l_keys.upper loop
+				if attached a_headers.item (l_keys.item (l_i)) as v then
+					custom_headers.force (v, l_keys.item (l_i))
 				end
-				i := i + 1
+				l_i := l_i + 1
 			end
 		end
 
@@ -235,14 +235,14 @@ feature -- Query parameters
 			params_not_void: a_params /= Void
 		local
 			l_keys: ARRAY [STRING]
-			i: INTEGER
+			l_i: INTEGER
 		do
 			l_keys := a_params.current_keys
-			from i := l_keys.lower until i > l_keys.upper loop
-				if attached a_params.item (l_keys.item (i)) as v then
-					query_params.force (v, l_keys.item (i))
+			from l_i := l_keys.lower until l_i > l_keys.upper loop
+				if attached a_params.item (l_keys.item (l_i)) as v then
+					query_params.force (v, l_keys.item (l_i))
 				end
-				i := i + 1
+				l_i := l_i + 1
 			end
 		end
 
@@ -495,17 +495,17 @@ feature {NONE} -- Implementation
 			-- Configure session with current settings.
 		local
 			l_keys: ARRAY [STRING]
-			i: INTEGER
+			l_i: INTEGER
 		do
 			a_session.set_timeout (timeout)
 			a_session.set_connect_timeout (connect_timeout)
 			-- Apply custom headers
 			l_keys := custom_headers.current_keys
-			from i := l_keys.lower until i > l_keys.upper loop
-				if attached custom_headers.item (l_keys.item (i)) as v then
-					a_session.add_header (l_keys.item (i), v)
+			from l_i := l_keys.lower until l_i > l_keys.upper loop
+				if attached custom_headers.item (l_keys.item (l_i)) as v then
+					a_session.add_header (l_keys.item (l_i), v)
 				end
-				i := i + 1
+				l_i := l_i + 1
 			end
 		end
 
@@ -514,7 +514,7 @@ feature {NONE} -- Implementation
 		local
 			l_first: BOOLEAN
 			l_keys: ARRAY [STRING]
-			i: INTEGER
+			l_i: INTEGER
 		do
 			if query_params.is_empty then
 				Result := a_url
@@ -527,17 +527,17 @@ feature {NONE} -- Implementation
 					l_first := True
 				end
 				l_keys := query_params.current_keys
-				from i := l_keys.lower until i > l_keys.upper loop
+				from l_i := l_keys.lower until l_i > l_keys.upper loop
 					if not l_first then
 						Result.append_character ('&')
 					end
-					Result.append (url_encode (l_keys.item (i)))
+					Result.append (url_encode (l_keys.item (l_i)))
 					Result.append_character ('=')
-					if attached query_params.item (l_keys.item (i)) as v then
+					if attached query_params.item (l_keys.item (l_i)) as v then
 						Result.append (url_encode (v))
 					end
 					l_first := False
-					i := i + 1
+					l_i := l_i + 1
 				end
 			end
 		end
@@ -545,21 +545,21 @@ feature {NONE} -- Implementation
 	url_encode (a_string: STRING): STRING
 			-- URL-encode a string.
 		local
-			i: INTEGER
-			c: CHARACTER
+			l_i: INTEGER
+			l_c: CHARACTER
 		do
-			create Result.make (a_string.count * 3)
-			from i := 1 until i > a_string.count loop
-				c := a_string.item (i)
-				if c.is_alpha or c.is_digit or c = '-' or c = '_' or c = '.' or c = '~' then
-					Result.append_character (c)
-				elseif c = ' ' then
+			create Result.make (a_string.count * Url_encode_buffer_multiplier)
+			from l_i := 1 until l_i > a_string.count loop
+				l_c := a_string.item (l_i)
+				if l_c.is_alpha or l_c.is_digit or l_c = '-' or l_c = '_' or l_c = '.' or l_c = '~' then
+					Result.append_character (l_c)
+				elseif l_c = ' ' then
 					Result.append_character ('+')
 				else
 					Result.append_character ('%%')
-					Result.append (c.code.to_hex_string)
+					Result.append (l_c.code.to_hex_string)
 				end
-				i := i + 1
+				l_i := l_i + 1
 			end
 		end
 
@@ -690,35 +690,55 @@ feature {NONE} -- Implementation
 	invoke_before_interceptors (a_url, a_method: STRING; a_data: detachable STRING)
 			-- Invoke all before_request interceptors.
 		local
-			i: INTEGER
+			l_i: INTEGER
 		do
-			from i := 1 until i > interceptors.count loop
-				interceptors.i_th (i).before_request (a_url, a_method, custom_headers, a_data)
-				i := i + 1
+			from l_i := 1 until l_i > interceptors.count loop
+				interceptors.i_th (l_i).before_request (a_url, a_method, custom_headers, a_data)
+				l_i := l_i + 1
 			end
 		end
 
 	invoke_after_interceptors (a_url, a_method: STRING; a_response: SIMPLE_HTTP_RESPONSE)
 			-- Invoke all after_response interceptors.
 		local
-			i: INTEGER
+			l_i: INTEGER
 		do
-			from i := 1 until i > interceptors.count loop
-				interceptors.i_th (i).after_response (a_url, a_method, a_response)
-				i := i + 1
+			from l_i := 1 until l_i > interceptors.count loop
+				interceptors.i_th (l_i).after_response (a_url, a_method, a_response)
+				l_i := l_i + 1
 			end
 		end
 
 	invoke_error_interceptors (a_url, a_method: STRING; a_error: STRING)
 			-- Invoke all on_error interceptors.
 		local
-			i: INTEGER
+			l_i: INTEGER
 		do
-			from i := 1 until i > interceptors.count loop
-				interceptors.i_th (i).on_error (a_url, a_method, a_error)
-				i := i + 1
+			from l_i := 1 until l_i > interceptors.count loop
+				interceptors.i_th (l_i).on_error (a_url, a_method, a_error)
+				l_i := l_i + 1
 			end
 		end
+
+feature {NONE} -- Constants
+
+	Default_timeout_seconds: INTEGER = 30
+			-- Default request timeout in seconds
+
+	Default_connect_timeout_seconds: INTEGER = 10
+			-- Default connection timeout in seconds
+
+	Default_max_redirects: INTEGER = 10
+			-- Default maximum number of redirects to follow
+
+	Default_initial_delay_ms: INTEGER = 100
+			-- Default initial retry delay in milliseconds
+
+	Default_max_delay_ms: INTEGER = 30000
+			-- Default maximum retry delay in milliseconds
+
+	Url_encode_buffer_multiplier: INTEGER = 3
+			-- Multiplier for URL encoding buffer (worst case: all chars encoded)
 
 note
 	copyright: "Copyright (c) 2024-2025, Larry Rix"

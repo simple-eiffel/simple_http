@@ -17,15 +17,15 @@ feature {NONE} -- Initialization
 	make_default
 			-- Create default retry policy (3 retries, exponential backoff with jitter).
 		do
-			max_retries := 3
-			initial_delay_ms := 100
-			max_delay_ms := 30000
+			max_retries := Default_max_retries
+			initial_delay_ms := Default_initial_delay_ms
+			max_delay_ms := Default_max_delay_ms
 			use_jitter := True
 			create retryable_status_codes.make (4)
-			retryable_status_codes.extend (429)
-			retryable_status_codes.extend (502)
-			retryable_status_codes.extend (503)
-			retryable_status_codes.extend (504)
+			retryable_status_codes.extend (Status_too_many_requests)
+			retryable_status_codes.extend (Status_bad_gateway)
+			retryable_status_codes.extend (Status_service_unavailable)
+			retryable_status_codes.extend (Status_gateway_timeout)
 			retry_on_network_error := True
 		end
 
@@ -42,10 +42,10 @@ feature {NONE} -- Initialization
 			max_delay_ms := a_max_ms
 			use_jitter := a_jitter
 			create retryable_status_codes.make (4)
-			retryable_status_codes.extend (429)
-			retryable_status_codes.extend (502)
-			retryable_status_codes.extend (503)
-			retryable_status_codes.extend (504)
+			retryable_status_codes.extend (Status_too_many_requests)
+			retryable_status_codes.extend (Status_bad_gateway)
+			retryable_status_codes.extend (Status_service_unavailable)
+			retryable_status_codes.extend (Status_gateway_timeout)
 			retry_on_network_error := True
 		ensure
 			max_set: max_retries = a_max_retries
@@ -58,8 +58,8 @@ feature {NONE} -- Initialization
 			-- Create policy that never retries.
 		do
 			max_retries := 0
-			initial_delay_ms := 100
-			max_delay_ms := 100
+			initial_delay_ms := Default_initial_delay_ms
+			max_delay_ms := Default_initial_delay_ms
 			use_jitter := False
 			create retryable_status_codes.make (0)
 			retry_on_network_error := False
@@ -185,7 +185,7 @@ feature -- Query
 			l_random: RANDOM
 		do
 			-- Exponential backoff: initial * 2^(attempt-1)
-			l_base_delay := initial_delay_ms * (2 ^ (a_attempt - 1)).truncated_to_integer
+			l_base_delay := initial_delay_ms * (Exponential_base ^ (a_attempt - 1)).truncated_to_integer
 
 			-- Cap at max delay
 			if l_base_delay > max_delay_ms then
@@ -198,7 +198,7 @@ feature -- Query
 				increment_jitter_seed
 				create l_random.set_seed (jitter_seed)
 				l_random.forth
-				l_jitter := (l_random.item \\ (l_base_delay // 2 + 1)).abs
+				l_jitter := (l_random.item \\ (l_base_delay // Jitter_divisor + 1)).abs
 				Result := l_base_delay + l_jitter
 			else
 				Result := l_base_delay
@@ -216,11 +216,43 @@ feature {NONE} -- Jitter Implementation
 	increment_jitter_seed
 			-- Increment seed for next random value.
 		do
-			jitter_seed := jitter_seed + 12345
+			jitter_seed := jitter_seed + Jitter_seed_increment
 			if jitter_seed < 0 then
 				jitter_seed := 1
 			end
 		end
+
+feature {NONE} -- Constants
+
+	Default_max_retries: INTEGER = 3
+			-- Default maximum retry attempts
+
+	Default_initial_delay_ms: INTEGER = 100
+			-- Default initial delay in milliseconds
+
+	Default_max_delay_ms: INTEGER = 30000
+			-- Default maximum delay in milliseconds (30 seconds)
+
+	Status_too_many_requests: INTEGER = 429
+			-- HTTP 429 Too Many Requests
+
+	Status_bad_gateway: INTEGER = 502
+			-- HTTP 502 Bad Gateway
+
+	Status_service_unavailable: INTEGER = 503
+			-- HTTP 503 Service Unavailable
+
+	Status_gateway_timeout: INTEGER = 504
+			-- HTTP 504 Gateway Timeout
+
+	Exponential_base: INTEGER = 2
+			-- Base for exponential backoff calculation
+
+	Jitter_divisor: INTEGER = 2
+			-- Divisor for jitter range (50% of base delay)
+
+	Jitter_seed_increment: INTEGER = 12345
+			-- Increment for pseudo-random jitter seed
 
 invariant
 	non_negative_max_retries: max_retries >= 0
