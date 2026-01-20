@@ -60,6 +60,42 @@ feature -- Header access
 			Result := header ("content-type")
 		end
 
+	charset: detachable STRING
+			-- Charset from Content-Type header (e.g., "utf-8").
+			-- Returns Void if no charset specified.
+		local
+			l_ct: detachable STRING
+			l_pos, l_end: INTEGER
+		do
+			l_ct := content_type
+			if attached l_ct then
+				l_pos := l_ct.substring_index ("charset=", 1)
+				if l_pos > 0 then
+					l_pos := l_pos + 8  -- Skip "charset="
+					-- Handle quoted charset
+					if l_pos <= l_ct.count and then l_ct.item (l_pos) = '"' then
+						l_pos := l_pos + 1
+						l_end := l_ct.index_of ('"', l_pos)
+						if l_end = 0 then
+							l_end := l_ct.count + 1
+						end
+					else
+						-- Unquoted charset ends at semicolon or end
+						l_end := l_ct.index_of (';', l_pos)
+						if l_end = 0 then
+							l_end := l_ct.count + 1
+						end
+					end
+					if l_end > l_pos then
+						Result := l_ct.substring (l_pos, l_end - 1)
+						Result.right_adjust
+						Result.left_adjust
+						Result.to_lower
+					end
+				end
+			end
+		end
+
 	content_length: INTEGER
 			-- Content-Length header value (0 if not present).
 		do
@@ -125,18 +161,44 @@ feature -- Output
 			end
 		end
 
+	body_text: STRING_32
+			-- Body decoded to STRING_32 using charset from Content-Type.
+			-- Assumes UTF-8 if charset is utf-8 or unspecified.
+			-- Falls back to Latin-1 for other charsets.
+		local
+			l_encoding: SIMPLE_ENCODING
+			l_charset: detachable STRING
+		do
+			if attached body as b then
+				l_charset := charset
+				if l_charset = Void or else l_charset.is_equal ("utf-8") then
+					-- UTF-8 decoding
+					create l_encoding.make
+					Result := l_encoding.utf_8_to_utf_32 (b.to_string_8)
+				else
+					-- Fallback: treat as Latin-1 (direct character mapping)
+					Result := b.to_string_32
+				end
+			else
+				create Result.make_empty
+			end
+		ensure
+			result_attached: Result /= Void
+		end
+
 feature -- JSON access
 
 	json: detachable SIMPLE_JSON_VALUE
 			-- Parse body as JSON (cached).
 			-- Returns Void if body is empty or not valid JSON.
+			-- Uses body_text for proper charset decoding.
 		local
 			l_parser: SIMPLE_JSON
 		do
 			if not json_parsed then
 				if attached body as b and then not b.is_empty then
 					create l_parser
-					cached_json := l_parser.decode_payload (b.to_string_32)
+					cached_json := l_parser.decode_payload (body_text)
 				end
 				json_parsed := True
 			end
