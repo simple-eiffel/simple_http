@@ -327,4 +327,53 @@ feature -- Tests
 			assert_true ("logger configured", True)
 		end
 
+	test_client_cache
+			-- Test HTTP client cache.
+		local
+			cache: SIMPLE_HTTP_CLIENT_CACHE
+			client1, client2: SIMPLE_HTTP
+		do
+			create cache.make
+			assert_integers_equal ("initially empty", 0, cache.cached_count)
+
+			-- Get client for host (creates new)
+			client1 := cache.client_for_host ("api.example.com")
+			assert_attached ("client created", client1)
+			assert_integers_equal ("one cached", 1, cache.cached_count)
+			assert_true ("is cached", cache.is_cached ("api.example.com"))
+
+			-- Get same client again (reuses cached)
+			client2 := cache.client_for_host ("api.example.com")
+			assert_true ("same client", client1 = client2)
+			assert_integers_equal ("still one", 1, cache.cached_count)
+
+			-- Get client for different host
+			client2 := cache.client_for_host ("other.example.com")
+			assert_integers_equal ("two cached", 2, cache.cached_count)
+
+			-- Invalidate one
+			cache.invalidate ("api.example.com")
+			assert_integers_equal ("one remaining", 1, cache.cached_count)
+			assert_false ("not cached", cache.is_cached ("api.example.com"))
+
+			-- Invalidate all
+			cache.invalidate_all
+			assert_integers_equal ("all cleared", 0, cache.cached_count)
+		end
+
+	test_client_cache_config
+			-- Test HTTP client cache configuration.
+		local
+			cache: SIMPLE_HTTP_CLIENT_CACHE
+			client: SIMPLE_HTTP
+		do
+			create cache.make
+			cache.set_default_timeout (60)
+			cache.set_default_connect_timeout (15)
+
+			client := cache.client_for_host ("example.com")
+			assert_integers_equal ("timeout applied", 60, client.timeout)
+			assert_integers_equal ("connect_timeout applied", 15, client.connect_timeout)
+		end
+
 end
