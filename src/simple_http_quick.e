@@ -323,24 +323,12 @@ feature {NONE} -- Implementation
 		end
 
 	url_encode (a_string: STRING): STRING
-			-- URL-encode string for form data.
+			-- URL-encode string for form data using SIMPLE_ZSTRING_ESCAPER.
 		local
-			i: INTEGER
-			c: CHARACTER
+			l_escaper: SIMPLE_ZSTRING_ESCAPER
 		do
-			create Result.make (a_string.count)
-			from i := 1 until i > a_string.count loop
-				c := a_string.item (i)
-				if c.is_alpha or c.is_digit or c = '-' or c = '_' or c = '.' or c = '~' then
-					Result.append_character (c)
-				elseif c = ' ' then
-					Result.append_character ('+')
-				else
-					Result.append ("%%")
-					Result.append (c.code.to_hex_string.substring (7, 8))
-				end
-				i := i + 1
-			end
+			create l_escaper
+			Result := l_escaper.url_encode (a_string)
 		ensure
 			result_exists: Result /= Void
 		end

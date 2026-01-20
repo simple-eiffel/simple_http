@@ -448,24 +448,12 @@ feature {NONE} -- Implementation
 			-- Follow redirects for this request?
 
 	url_encode (a_string: STRING): STRING
-			-- URL-encode a string.
+			-- URL-encode a string using SIMPLE_ZSTRING_ESCAPER.
 		local
-			i: INTEGER
-			c: CHARACTER
+			l_escaper: SIMPLE_ZSTRING_ESCAPER
 		do
-			create Result.make (a_string.count * 3)
-			from i := 1 until i > a_string.count loop
-				c := a_string.item (i)
-				if c.is_alpha or c.is_digit or c = '-' or c = '_' or c = '.' or c = '~' then
-					Result.append_character (c)
-				elseif c = ' ' then
-					Result.append_character ('+')
-				else
-					Result.append_character ('%%')
-					Result.append (c.code.to_hex_string)
-				end
-				i := i + 1
-			end
+			create l_escaper
+			Result := l_escaper.url_encode (a_string)
 		end
 
 invariant

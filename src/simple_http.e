@@ -543,24 +543,12 @@ feature {NONE} -- Implementation
 		end
 
 	url_encode (a_string: STRING): STRING
-			-- URL-encode a string.
+			-- URL-encode a string using SIMPLE_ZSTRING_ESCAPER.
 		local
-			l_i: INTEGER
-			l_c: CHARACTER
+			l_escaper: SIMPLE_ZSTRING_ESCAPER
 		do
-			create Result.make (a_string.count * Url_encode_buffer_multiplier)
-			from l_i := 1 until l_i > a_string.count loop
-				l_c := a_string.item (l_i)
-				if l_c.is_alpha or l_c.is_digit or l_c = '-' or l_c = '_' or l_c = '.' or l_c = '~' then
-					Result.append_character (l_c)
-				elseif l_c = ' ' then
-					Result.append_character ('+')
-				else
-					Result.append_character ('%%')
-					Result.append (l_c.code.to_hex_string)
-				end
-				l_i := l_i + 1
-			end
+			create l_escaper
+			Result := l_escaper.url_encode (a_string)
 		end
 
 	execute_with_retry (a_url, a_method: STRING; a_data: detachable STRING; a_is_idempotent: BOOLEAN): SIMPLE_HTTP_RESPONSE
@@ -736,9 +724,6 @@ feature {NONE} -- Constants
 
 	Default_max_delay_ms: INTEGER = 30000
 			-- Default maximum retry delay in milliseconds
-
-	Url_encode_buffer_multiplier: INTEGER = 3
-			-- Multiplier for URL encoding buffer (worst case: all chars encoded)
 
 note
 	copyright: "Copyright (c) 2024-2025, Larry Rix"
