@@ -24,10 +24,11 @@
 		<library name="simple_zstring" location="$SIMPLE_EIFFEL/simple_zstring/simple_zstring.ecf"/>
 		<library name="simple_encoding" location="$SIMPLE_EIFFEL/simple_encoding/simple_encoding.ecf"/>
 		<library name="simple_factory" location="$SIMPLE_EIFFEL/simple_factory/simple_factory.ecf"/>
+		<library name="simple_mml" location="$SIMPLE_EIFFEL\simple_mml\simple_mml.ecf"/>
 		<cluster name="src" location=".\src\" recursive="true"/>
 	</target>
 	<target name="simple_http_tests" extends="simple_http">
-		<root class="HTTP_TEST_APP" feature="make"/>
+		<root class="TEST_APP" feature="make"/>
 		<option warning="warning">
 			<assertions precondition="true" postcondition="true" check="true" invariant="true" loop="true" supplier_precondition="true"/>
 		</option>
