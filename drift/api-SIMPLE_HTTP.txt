@@ -1,0 +1,508 @@
+note
+	description: "Simple HTTP client for making web requests"
+	author: "Larry Rix"
+	date: "$Date$"
+	revision: "$Revision$"
+
+class interface
+	SIMPLE_HTTP
+
+create 
+	make
+			-- Create HTTP client.
+
+feature -- Access
+
+	connect_timeout: INTEGER_32
+			-- Connection timeout in seconds
+
+	follow_redirects: BOOLEAN
+			-- Should redirects be followed? (default True)
+
+	generating_type: TYPE [detachable SIMPLE_HTTP]
+			-- Type of current object
+			-- (type of which it is a direct instance)
+			-- (from ANY)
+		ensure -- from ANY
+			generating_type_not_void: Result /= Void
+
+	generator: STRING_8
+			-- Name of current object's generating class
+			-- (base class of the type of which it is a direct instance)
+			-- (from ANY)
+		ensure -- from ANY
+			generator_not_void: Result /= Void
+			generator_not_empty: not Result.is_empty
+
+	last_response: detachable SIMPLE_HTTP_RESPONSE
+			-- Last response received
+
+	max_redirects: INTEGER_32
+			-- Maximum number of redirects to follow (default 10)
+
+	retry_count: INTEGER_32
+			-- Number of retries performed on last request
+
+	retry_policy: SIMPLE_HTTP_RETRY_POLICY
+			-- Current retry policy
+
+	timeout: INTEGER_32
+			-- Request timeout in seconds
+	
+feature -- Comparison
+
+	frozen deep_equal (a: detachable ANY; b: like arg #1): BOOLEAN
+			-- Are `a` and `b` either both void
+			-- or attached to isomorphic object structures?
+			-- (from ANY)
+		ensure -- from ANY
+			instance_free: class
+			shallow_implies_deep: standard_equal (a, b) implies Result
+			both_or_none_void: (a = Void) implies (Result = (b = Void))
+			same_type: (Result and (a /= Void)) implies (b /= Void and then a.same_type (b))
+			symmetric: Result implies deep_equal (b, a)
+
+	frozen equal (a: detachable ANY; b: like arg #1): BOOLEAN
+			-- Are `a` and `b` either both void or attached
+			-- to objects considered equal?
+			-- (from ANY)
+		ensure -- from ANY
+			instance_free: class
+			definition: Result = (a = Void and b = Void) or else ((a /= Void and b /= Void) and then a.is_equal (b))
+
+	frozen is_deep_equal alias "≡≡≡" (other: SIMPLE_HTTP): BOOLEAN
+			-- Are `Current` and `other` attached to isomorphic object structures?
+			-- (from ANY)
+		require -- from ANY
+			other_not_void: other /= Void
+		ensure -- from ANY
+			shallow_implies_deep: standard_is_equal (other) implies Result
+			same_type: Result implies same_type (other)
+			symmetric: Result implies other.is_deep_equal (Current)
+
+	is_equal (other: SIMPLE_HTTP): BOOLEAN
+			-- Is `other` attached to an object considered
+			-- equal to current object?
+			-- (from ANY)
+		require -- from ANY
+			other_not_void: other /= Void
+		ensure -- from ANY
+			symmetric: Result implies other ~ Current
+			consistent: standard_is_equal (other) implies Result
+
+	frozen standard_equal (a: detachable ANY; b: like arg #1): BOOLEAN
+			-- Are `a` and `b` either both void or attached to
+			-- field-by-field identical objects of the same type?
+			-- Always uses default object comparison criterion.
+			-- (from ANY)
+		ensure -- from ANY
+			instance_free: class
+			definition: Result = (a = Void and b = Void) or else ((a /= Void and b /= Void) and then a.standard_is_equal (b))
+
+	frozen standard_is_equal alias "≜" (other: SIMPLE_HTTP): BOOLEAN
+			-- Is `other` attached to an object of the same type
+			-- as current object, and field-by-field identical to it?
+			-- (from ANY)
+		require -- from ANY
+			other_not_void: other /= Void
+		ensure -- from ANY
+			same_type: Result implies same_type (other)
+			symmetric: Result implies other.standard_is_equal (Current)
+	
+feature -- Status report
+
+	conforms_to (other: ANY): BOOLEAN
+			-- Does type of current object conform to type
+			-- of `other` (as per Eiffel: The Language, chapter 13)?
+			-- (from ANY)
+		require -- from ANY
+			other_not_void: other /= Void
+
+	has_error: BOOLEAN
+			-- Did last request encounter an error?
+
+	is_success: BOOLEAN
+			-- Was last request successful (2xx status)?
+
+	same_type (other: ANY): BOOLEAN
+			-- Is type of current object identical to type of `other`?
+			-- (from ANY)
+		require -- from ANY
+			other_not_void: other /= Void
+		ensure -- from ANY
+			definition: Result = (conforms_to (other) and other.conforms_to (Current))
+	
+feature -- Duplication
+
+	copy (other: SIMPLE_HTTP)
+			-- Update current object using fields of object attached
+			-- to `other`, so as to yield equal objects.
+			-- (from ANY)
+		require -- from ANY
+			other_not_void: other /= Void
+			type_identity: same_type (other)
+		ensure -- from ANY
+			is_equal: Current ~ other
+
+	frozen deep_copy (other: SIMPLE_HTTP)
+			-- Effect equivalent to that of:
+			--		`copy` (`other` . `deep_twin`)
+			-- (from ANY)
+		require -- from ANY
+			other_not_void: other /= Void
+		ensure -- from ANY
+			deep_equal: deep_equal (Current, other)
+
+	frozen deep_twin: SIMPLE_HTTP
+			-- New object structure recursively duplicated from Current.
+			-- (from ANY)
+		ensure -- from ANY
+			deep_twin_not_void: Result /= Void
+			deep_equal: deep_equal (Current, Result)
+
+	frozen standard_copy (other: SIMPLE_HTTP)
+			-- Copy every field of `other` onto corresponding field
+			-- of current object.
+			-- (from ANY)
+		require -- from ANY
+			other_not_void: other /= Void
+			type_identity: same_type (other)
+		ensure -- from ANY
+			is_standard_equal: standard_is_equal (other)
+
+	frozen standard_twin: SIMPLE_HTTP
+			-- New object field-by-field identical to `other`.
+			-- Always uses default copying semantics.
+			-- (from ANY)
+		ensure -- from ANY
+			standard_twin_not_void: Result /= Void
+			equal: standard_equal (Result, Current)
+
+	frozen twin: SIMPLE_HTTP
+			-- New object equal to `Current`
+			-- `twin` calls `copy`; to change copying/twinning semantics, redefine `copy`.
+			-- (from ANY)
+		ensure -- from ANY
+			twin_not_void: Result /= Void
+			is_equal: Result ~ Current
+	
+feature -- Basic operations
+
+	frozen default: detachable SIMPLE_HTTP
+			-- Default value of object's type
+			-- (from ANY)
+
+	frozen default_pointer: POINTER
+			-- Default value of type `POINTER`
+			-- (Avoid the need to write `p`.`default` for
+			-- some `p` of type `POINTER`.)
+			-- (from ANY)
+		ensure -- from ANY
+			instance_free: class
+
+	default_rescue
+			-- Process exception for routines with no Rescue clause.
+			-- (Default: do nothing.)
+			-- (from ANY)
+
+	delete (a_url: STRING_8): SIMPLE_HTTP_RESPONSE
+			-- Perform DELETE request with retry support.
+		require
+			url_not_empty: not a_url.is_empty
+
+	frozen do_nothing
+			-- Execute a null action.
+			-- (from ANY)
+		ensure -- from ANY
+			instance_free: class
+
+	get (a_url: STRING_8): SIMPLE_HTTP_RESPONSE
+			-- Perform GET request with retry support.
+		require
+			url_not_empty: not a_url.is_empty
+
+	head (a_url: STRING_8): SIMPLE_HTTP_RESPONSE
+			-- Perform HEAD request with retry support.
+		require
+			url_not_empty: not a_url.is_empty
+
+	patch (a_url: STRING_8; a_data: detachable STRING_8): SIMPLE_HTTP_RESPONSE
+			-- Perform PATCH request with optional data and retry support.
+		require
+			url_not_empty: not a_url.is_empty
+
+	patch_json (a_url: STRING_8; a_json: SIMPLE_JSON_OBJECT): SIMPLE_HTTP_RESPONSE
+			-- Perform PATCH request with JSON body.
+		require
+			url_not_empty: not a_url.is_empty
+			json_not_void: a_json /= Void
+
+	post (a_url: STRING_8; a_data: detachable STRING_8): SIMPLE_HTTP_RESPONSE
+			-- Perform POST request with optional data.
+			-- Note: POST is not retried by default (non-idempotent).
+		require
+			url_not_empty: not a_url.is_empty
+
+	post_json (a_url: STRING_8; a_json: SIMPLE_JSON_OBJECT): SIMPLE_HTTP_RESPONSE
+			-- Perform POST request with JSON body.
+		require
+			url_not_empty: not a_url.is_empty
+			json_not_void: a_json /= Void
+
+	put (a_url: STRING_8; a_data: detachable STRING_8): SIMPLE_HTTP_RESPONSE
+			-- Perform PUT request with optional data and retry support.
+		require
+			url_not_empty: not a_url.is_empty
+
+	put_json (a_url: STRING_8; a_json: SIMPLE_JSON_OBJECT): SIMPLE_HTTP_RESPONSE
+			-- Perform PUT request with JSON body.
+		require
+			url_not_empty: not a_url.is_empty
+			json_not_void: a_json /= Void
+	
+feature -- Authentication
+
+	set_api_key (a_header_name, a_key: STRING_8)
+			-- Set API key in specified header.
+		require
+			header_name_not_empty: not a_header_name.is_empty
+			key_not_empty: not a_key.is_empty
+
+	set_auth_header (a_value: STRING_8)
+			-- Set Authorization header directly.
+		require
+			value_not_empty: not a_value.is_empty
+
+	set_basic_auth (a_username, a_password: STRING_8)
+			-- Set Authorization header with Basic authentication.
+		require
+			username_not_empty: not a_username.is_empty
+
+	set_bearer_token (a_token: STRING_8)
+			-- Set Authorization header with Bearer token.
+		require
+			token_not_empty: not a_token.is_empty
+	
+feature -- Content type helpers
+
+	set_accept_json
+			-- Set Accept header to application/json.
+
+	set_content_type_form
+			-- Set Content-Type header to application/x-www-form-urlencoded.
+
+	set_content_type_json
+			-- Set Content-Type header to application/json.
+	
+feature -- Cookie Management
+
+	clear_cookies
+			-- Clear all stored cookies.
+
+	cookies_enabled: BOOLEAN
+			-- Is automatic cookie management enabled?
+
+	disable_cookies
+			-- Disable automatic cookie handling.
+		ensure
+			disabled: not cookies_enabled
+
+	enable_cookies
+			-- Enable automatic cookie handling.
+		ensure
+			enabled: cookies_enabled
+
+	get_cookie (a_name: STRING_8): detachable STRING_8
+			-- Get a cookie value by name.
+		require
+			name_not_empty: not a_name.is_empty
+
+	set_cookie (a_name, a_value: STRING_8)
+			-- Manually set a cookie.
+		require
+			name_not_empty: not a_name.is_empty
+			cookies_enabled: cookies_enabled
+	
+feature -- Header management
+
+	add_header (a_name, a_value: STRING_8)
+			-- Add custom header to all subsequent requests.
+		require
+			name_not_empty: not a_name.is_empty
+			value_not_empty: not a_value.is_empty
+		ensure
+			header_set: custom_headers.has (a_name)
+
+	clear_headers
+			-- Remove all custom headers.
+		ensure
+			empty: custom_headers.is_empty
+
+	remove_header (a_name: STRING_8)
+			-- Remove a custom header.
+		require
+			name_not_empty: not a_name.is_empty
+		ensure
+			removed: not custom_headers.has (a_name)
+
+	set_headers (a_headers: HASH_TABLE [STRING_8, STRING_8])
+			-- Set multiple headers at once.
+		require
+			headers_not_void: a_headers /= Void
+	
+feature -- Interceptors
+
+	add_interceptor (a_interceptor: SIMPLE_HTTP_INTERCEPTOR)
+			-- Add an interceptor to the chain.
+		require
+			interceptor_not_void: a_interceptor /= Void
+		ensure
+			added: interceptors.has (a_interceptor)
+
+	clear_interceptors
+			-- Remove all interceptors.
+		ensure
+			empty: interceptors.is_empty
+
+	remove_interceptor (a_interceptor: SIMPLE_HTTP_INTERCEPTOR)
+			-- Remove an interceptor from the chain.
+		require
+			interceptor_not_void: a_interceptor /= Void
+		ensure
+			removed: not interceptors.has (a_interceptor)
+	
+feature -- Output
+
+	Io: STD_FILES
+			-- Handle to standard file setup
+			-- (from ANY)
+		ensure -- from ANY
+			instance_free: class
+			io_not_void: Result /= Void
+
+	out: STRING_8
+			-- New string containing terse printable representation
+			-- of current object
+			-- (from ANY)
+		ensure -- from ANY
+			out_not_void: Result /= Void
+
+	print (o: detachable ANY)
+			-- Write terse external representation of `o`
+			-- on standard output.
+			-- (from ANY)
+		ensure -- from ANY
+			instance_free: class
+
+	frozen tagged_out: STRING_8
+			-- New string containing terse printable representation
+			-- of current object
+			-- (from ANY)
+		ensure -- from ANY
+			tagged_out_not_void: Result /= Void
+	
+feature -- Platform
+
+	Operating_environment: OPERATING_ENVIRONMENT
+			-- Objects available from the operating system
+			-- (from ANY)
+		ensure -- from ANY
+			instance_free: class
+			operating_environment_not_void: Result /= Void
+	
+feature -- Query parameters
+
+	add_query (a_name, a_value: STRING_8)
+			-- Add query parameter to all subsequent requests.
+		require
+			name_not_empty: not a_name.is_empty
+		ensure
+			param_set: query_params.has (a_name)
+
+	clear_queries
+			-- Remove all query parameters.
+		ensure
+			empty: query_params.is_empty
+
+	remove_query (a_name: STRING_8)
+			-- Remove a query parameter.
+		require
+			name_not_empty: not a_name.is_empty
+		ensure
+			removed: not query_params.has (a_name)
+
+	set_queries (a_params: HASH_TABLE [STRING_8, STRING_8])
+			-- Set multiple query parameters at once.
+		require
+			params_not_void: a_params /= Void
+	
+feature -- Redirect Settings
+
+	set_follow_redirects (a_value: BOOLEAN)
+			-- Enable or disable redirect following.
+		ensure
+			set: follow_redirects = a_value
+
+	set_max_redirects (a_count: INTEGER_32)
+			-- Set maximum number of redirects to follow.
+			-- Set to 0 to disable redirect following.
+		require
+			non_negative: a_count >= 0
+		ensure
+			set: max_redirects = a_count
+			disabled_if_zero: a_count = 0 implies not follow_redirects
+	
+feature -- Request Builder
+
+	request: SIMPLE_HTTP_REQUEST_BUILDER
+			-- Create a new fluent request builder.
+	
+feature -- Retry Settings
+
+	disable_retry
+			-- Disable retry (no automatic retries).
+		ensure
+			disabled: retry_policy.max_retries = 0
+
+	enable_retry
+			-- Enable default retry policy (3 retries, exponential backoff).
+
+	enable_retry_custom (a_max_retries: INTEGER_32)
+			-- Enable retry with custom max attempts.
+		require
+			positive: a_max_retries > 0
+
+	set_retry_policy (a_policy: SIMPLE_HTTP_RETRY_POLICY)
+			-- Set the retry policy.
+		require
+			policy_not_void: a_policy /= Void
+		ensure
+			set: retry_policy = a_policy
+	
+feature -- Settings
+
+	set_connect_timeout (a_seconds: INTEGER_32)
+			-- Set connection timeout.
+		require
+			non_negative: a_seconds >= 0
+		ensure
+			set: connect_timeout = a_seconds
+
+	set_timeout (a_seconds: INTEGER_32)
+			-- Set request timeout.
+		require
+			non_negative: a_seconds >= 0
+		ensure
+			set: timeout = a_seconds
+	
+invariant
+		-- from ANY
+	reflexive_equality: standard_is_equal (Current)
+	reflexive_conformance: conforms_to (Current)
+
+note
+	copyright: "Copyright (c) 2024-2025, Larry Rix"
+	license: "MIT License"
+
+end -- class SIMPLE_HTTP
+
