@@ -476,7 +476,7 @@ feature -- Cookie Management
 
 feature {NONE} -- Implementation
 
-	client: NET_HTTP_CLIENT
+	client: CURL_HTTP_CLIENT
 			-- Underlying HTTP client
 
 	custom_headers: HASH_TABLE [STRING, STRING]
@@ -491,7 +491,7 @@ feature {NONE} -- Implementation
 	cookie_jar: detachable SIMPLE_HTTP_COOKIE_JAR
 			-- Cookie storage (created on demand)
 
-	configure_session (a_session: NET_HTTP_CLIENT_SESSION)
+	configure_session (a_session: CURL_HTTP_CLIENT_SESSION)
 			-- Configure session with current settings.
 		local
 			l_keys: ARRAY [STRING]
@@ -602,7 +602,7 @@ feature {NONE} -- Implementation
 	execute_single_request (a_url, a_method: STRING; a_data: detachable STRING): SIMPLE_HTTP_RESPONSE
 			-- Execute a single HTTP request without retry.
 		local
-			l_session: NET_HTTP_CLIENT_SESSION
+			l_session: CURL_HTTP_CLIENT_SESSION
 			l_raw: HTTP_CLIENT_RESPONSE
 			l_full_url: STRING
 		do
@@ -662,11 +662,11 @@ feature {NONE} -- Implementation
 			end
 		end
 
-	configure_redirects (a_session: NET_HTTP_CLIENT_SESSION)
+	configure_redirects (a_session: CURL_HTTP_CLIENT_SESSION)
 			-- Configure redirect settings on session.
 			-- Note: This depends on ISE library capabilities.
 		do
-			-- ISE NET_HTTP_CLIENT_SESSION may have set_max_redirects
+			-- ISE CURL_HTTP_CLIENT_SESSION may have set_max_redirects
 			-- For now, rely on defaults (follow redirects up to 10)
 			-- Advanced redirect control requires checking ISE library features
 			if not follow_redirects then
