@@ -1,5 +1,32 @@
 note
-	description: "Simple HTTP client for making web requests"
+	description: "[
+		Simple HTTP client for making web requests.
+
+		TRANSPORT (1.1.0): every exchange rides SIMPLE_WINHTTP (WinHTTP,
+		part of every supported Windows). Until 1.0.x the transport was
+		ISE's curl_http_client, which runs the curl PROGRAM and splices
+		the request body unescaped into ` --data "<body>"' on a command
+		line: every '"' in a JSON body was lost, a blank could cut the
+		argument, '%' '^' '&' '|' '<' were at the mercy of the shell, and
+		a large body hit the command-line length limit. Bodies now travel
+		as bytes, byte-for-byte; headers travel as header lines; the URL
+		travels on the request line (see SIMPLE_HTTP_WIRE.wire_url).
+
+		Behavior kept from the curl transport:
+		* a request with a body and no Content-Type header is sent as
+		  application/x-www-form-urlencoded (curl's --data default);
+		* an Accept header of */* unless the caller sets one;
+		* redirects (301/302/303/307/308) are followed, up to
+		  `max_redirects', when `follow_redirects'.
+
+		Redirect rules: 303 - and 301/302 after a POST - continue as a
+		GET without the body; 307/308 repeat the method and body. When a
+		redirect leaves the origin (scheme, host, port), the Authorization
+		and Cookie headers are not sent onward.
+
+		A network condition is a RESULT, never an exception: the response
+		has `error_occurred' and an `error_message'.
+	]"
 	author: "Larry Rix"
 	date: "$Date$"
 	revision: "$Revision$"
@@ -15,7 +42,8 @@ feature {NONE} -- Initialization
 	make
 			-- Create HTTP client.
 		do
-			create client
+			create transport.make
+			create wire
 			create custom_headers.make (5)
 			create query_params.make (5)
 			create interceptors.make (3)
@@ -25,6 +53,13 @@ feature {NONE} -- Initialization
 			follow_redirects := True
 			create retry_policy.make_none
 			cookies_enabled := False
+			body_maximum := Default_body_maximum
+		ensure
+			default_timeout: timeout = Default_timeout_seconds
+			default_connect_timeout: connect_timeout = Default_connect_timeout_seconds
+			following: follow_redirects and max_redirects = Default_max_redirects
+			default_body_maximum: body_maximum = Default_body_maximum
+			no_headers: custom_headers.is_empty
 		end
 
 feature -- Access
@@ -50,6 +85,11 @@ feature -- Access
 	retry_count: INTEGER
 			-- Number of retries performed on last request
 
+	body_maximum: INTEGER
+			-- Largest response body accepted, in bytes (default 256 MiB).
+			-- A larger body fails the request cleanly (`has_error')
+			-- instead of growing without bound.
+
 feature -- Settings
 
 	set_timeout (a_seconds: INTEGER)
@@ -70,6 +110,17 @@ feature -- Settings
 			connect_timeout := a_seconds
 		ensure
 			set: connect_timeout = a_seconds
+		end
+
+	set_body_maximum (a_bytes: INTEGER)
+			-- Accept response bodies up to `a_bytes'.
+		require
+			positive: a_bytes > 0
+			within_ceiling: a_bytes <= Body_maximum_ceiling
+		do
+			body_maximum := a_bytes
+		ensure
+			set: body_maximum = a_bytes
 		end
 
 feature -- Redirect Settings
@@ -476,8 +527,11 @@ feature -- Cookie Management
 
 feature {NONE} -- Implementation
 
-	client: CURL_HTTP_CLIENT
-			-- Underlying HTTP client
+	transport: SIMPLE_WINHTTP
+			-- The wire: one synchronous WinHTTP exchange per call
+
+	wire: SIMPLE_HTTP_WIRE
+			-- URL rules for the request line and for redirects
 
 	custom_headers: HASH_TABLE [STRING, STRING]
 			-- Custom headers to send with requests
@@ -490,24 +544,6 @@ feature {NONE} -- Implementation
 
 	cookie_jar: detachable SIMPLE_HTTP_COOKIE_JAR
 			-- Cookie storage (created on demand)
-
-	configure_session (a_session: CURL_HTTP_CLIENT_SESSION)
-			-- Configure session with current settings.
-		local
-			l_keys: ARRAY [STRING]
-			l_i: INTEGER
-		do
-			a_session.set_timeout (timeout)
-			a_session.set_connect_timeout (connect_timeout)
-			-- Apply custom headers
-			l_keys := custom_headers.current_keys
-			from l_i := l_keys.lower until l_i > l_keys.upper loop
-				if attached custom_headers.item (l_keys.item (l_i)) as v then
-					a_session.add_header (l_keys.item (l_i), v)
-				end
-				l_i := l_i + 1
-			end
-		end
 
 	build_url (a_url: STRING): STRING
 			-- Build full URL with query parameters.
@@ -600,54 +636,201 @@ feature {NONE} -- Implementation
 		end
 
 	execute_single_request (a_url, a_method: STRING; a_data: detachable STRING): SIMPLE_HTTP_RESPONSE
-			-- Execute a single HTTP request without retry.
+			-- One request without retry: the exchange with the server and,
+			-- when `follow_redirects', the redirect hops after it (at most
+			-- `max_redirects'). Never raises for a network condition.
 		local
-			l_session: CURL_HTTP_CLIENT_SESSION
-			l_raw: HTTP_CLIENT_RESPONSE
-			l_full_url: STRING
+			l_full_url, l_url, l_method, l_next: STRING
+			l_body: detachable STRING
+			l_hops: INTEGER
+			l_done, l_with_credentials: BOOLEAN
 		do
 			l_full_url := build_url (a_url)
-			l_session := client.new_session (l_full_url)
-			configure_session (l_session)
 
-			-- Add cookie header if enabled
-			if cookies_enabled and attached cookie_jar as cj and then not cj.is_empty then
-				l_session.add_header ("Cookie", cj.cookie_header)
-			end
-
-			-- Invoke before_request interceptors
+				-- Interceptors run first, so a header one adds travels
+				-- with this very request.
 			invoke_before_interceptors (l_full_url, a_method, a_data)
 
-			-- Configure redirect behavior if session supports it
-			configure_redirects (l_session)
-
-			-- Execute based on method
-			if a_method.is_case_insensitive_equal ("GET") then
-				l_raw := l_session.get ("", Void)
-			elseif a_method.is_case_insensitive_equal ("POST") then
-				l_raw := l_session.post ("", Void, a_data)
-			elseif a_method.is_case_insensitive_equal ("PUT") then
-				l_raw := l_session.put ("", Void, a_data)
-			elseif a_method.is_case_insensitive_equal ("DELETE") then
-				l_raw := l_session.delete ("", Void)
-			elseif a_method.is_case_insensitive_equal ("HEAD") then
-				l_raw := l_session.head ("", Void)
-			elseif a_method.is_case_insensitive_equal ("PATCH") then
-				l_raw := l_session.patch ("", Void, a_data)
+			l_method := wire_method (a_method)
+			l_body := a_data
+			l_with_credentials := True
+			if wire.is_web_url (l_full_url) then
+				l_url := wire.wire_url (l_full_url)
 			else
-				-- Default to GET
-				l_raw := l_session.get ("", Void)
+				l_url := l_full_url
+			end
+			from
+				Result := exchange (l_method, l_url, l_body, l_with_credentials)
+			invariant
+				hops_bounded: l_hops <= max_redirects
+			until
+				l_done
+			loop
+				if cookies_enabled and attached cookie_jar as cj and then not Result.error_occurred then
+					cj.extract_cookies_from_response (Result)
+				end
+				if
+					follow_redirects and then l_hops < max_redirects and then
+					is_followed_redirect (Result.status) and then
+					wire.is_web_url (l_url) and then
+					attached Result.header ("location") as l_location and then
+					not l_location.is_empty
+				then
+					if Result.status = 303 or else ((Result.status = 301 or Result.status = 302) and l_method.same_string ("POST")) then
+						if not l_method.same_string ("HEAD") then
+							l_method := "GET"
+						end
+						l_body := Void
+					end
+					l_next := wire.resolved_location (l_url, l_location)
+					if not wire.same_origin (l_url, l_next) then
+							-- Credentials never follow a redirect to another origin.
+						l_with_credentials := False
+					end
+					l_url := l_next
+					l_hops := l_hops + 1
+					Result := exchange (l_method, l_url, l_body, l_with_credentials)
+				else
+					l_done := True
+				end
+			variant
+				2 * (max_redirects - l_hops) + (not l_done).to_integer
 			end
 
-			create Result.make_from_response (l_raw)
-
-			-- Extract cookies from response if enabled
-			if cookies_enabled and attached cookie_jar as cj then
-				cj.extract_cookies_from_response (Result)
+			if Result.error_occurred and then attached Result.error_message as l_message then
+				invoke_error_interceptors (l_full_url, a_method, l_message.to_string_8)
 			end
 
 			-- Invoke after_response interceptors
 			invoke_after_interceptors (l_full_url, a_method, Result)
+		end
+
+	exchange (a_method, a_url: STRING; a_body: detachable STRING; a_with_credentials: BOOLEAN): SIMPLE_HTTP_RESPONSE
+			-- One exchange of `a_method' on `a_url' carrying `a_body' bytes
+			-- verbatim. The Authorization and Cookie headers go only when
+			-- `a_with_credentials'. A URL or header the wire cannot carry
+			-- is a failed response, never a broken request.
+		require
+			method_given: not a_method.is_empty
+		local
+			l_headers: HASH_TABLE [STRING, STRING]
+		do
+			if not (wire.is_on_wire (a_url) and then transport.is_web_url (a_url) and then transport.is_ascii_url (a_url)) then
+				create Result.make_failed ("Not a usable http(s) URL: " + a_url)
+			elseif not transport.is_known_method (a_method) then
+				create Result.make_failed ("Unsupported HTTP method: " + a_method)
+			else
+				l_headers := request_headers (a_body /= Void, a_with_credentials)
+				if attached unclean_header (l_headers) as l_bad then
+					create Result.make_failed ("Header %"" + l_bad + "%" holds characters an HTTP header line cannot carry (printable ASCII only, no CR or LF)")
+				else
+					transport.set_connect_timeout_seconds (wire_seconds (connect_timeout))
+					transport.set_body_maximum (body_maximum)
+					create Result.make_from_exchange (transport.send (a_method, a_url, l_headers, a_body, wire_seconds (timeout)))
+				end
+			end
+		end
+
+	request_headers (a_has_body, a_with_credentials: BOOLEAN): HASH_TABLE [STRING, STRING]
+			-- The header lines for one exchange: the custom headers (less
+			-- Authorization and Cookie unless `a_with_credentials'), the
+			-- cookie jar's Cookie when enabled, Accept */* unless set, and
+			-- - when `a_has_body' - a Content-Type of
+			-- application/x-www-form-urlencoded unless set (the curl
+			-- transport's --data default, kept for existing callers).
+		local
+			l_name: STRING
+		do
+			create Result.make (custom_headers.count + 3)
+			across
+				custom_headers as ic
+			loop
+				l_name := @ic.key
+				if a_with_credentials or else not is_credential_header (l_name) then
+					Result.force (ic, l_name)
+				end
+			end
+			if a_with_credentials and cookies_enabled and attached cookie_jar as cj and then not cj.is_empty then
+				Result.force (cj.cookie_header, "Cookie")
+			end
+			if not has_header_named (Result, "Accept") then
+				Result.force ("*/*", "Accept")
+			end
+			if a_has_body and not has_header_named (Result, "Content-Type") then
+				Result.force ("application/x-www-form-urlencoded", "Content-Type")
+			end
+		ensure
+			accept_present: has_header_named (Result, "Accept")
+			content_type_with_body: a_has_body implies has_header_named (Result, "Content-Type")
+			credentials_withheld: not a_with_credentials implies not (has_header_named (Result, "Authorization") or has_header_named (Result, "Cookie"))
+		end
+
+	is_credential_header (a_name: STRING): BOOLEAN
+			-- Is `a_name' a header that must not follow a cross-origin redirect?
+		do
+			Result := a_name.is_case_insensitive_equal ("Authorization") or a_name.is_case_insensitive_equal ("Cookie")
+		end
+
+	has_header_named (a_headers: HASH_TABLE [STRING, STRING]; a_name: STRING): BOOLEAN
+			-- Does `a_headers' hold a header named `a_name' (any letter case)?
+		do
+			across
+				a_headers as ic
+			until
+				Result
+			loop
+				Result := (@ic.key).is_case_insensitive_equal (a_name)
+			end
+		end
+
+	unclean_header (a_headers: HASH_TABLE [STRING, STRING]): detachable STRING
+			-- Name of the first header in `a_headers' the wire cannot carry
+			-- (see SIMPLE_WINHTTP.is_header_table_clean), or Void.
+		do
+			across
+				a_headers as ic
+			until
+				Result /= Void
+			loop
+				if not (transport.is_clean_header_name (@ic.key) and transport.is_clean_header_value (ic)) then
+					Result := @ic.key
+				end
+			end
+		ensure
+			void_when_clean: (Result = Void) = transport.is_header_table_clean (a_headers)
+		end
+
+	wire_method (a_method: STRING): STRING
+			-- `a_method' in upper case; GET for a method the transport
+			-- does not send (the historical default).
+		do
+			Result := a_method.as_upper
+			if not transport.is_known_method (Result) then
+				Result := "GET"
+			end
+		ensure
+			known: transport.is_known_method (Result)
+		end
+
+	wire_seconds (a_seconds: INTEGER): INTEGER
+			-- `a_seconds' as a transport timeout: 0 (no limit, as the curl
+			-- transport treated it) and anything beyond the wire's range
+			-- become `Unlimited_timeout_seconds'.
+		do
+			if a_seconds <= 0 or a_seconds > Unlimited_timeout_seconds then
+				Result := Unlimited_timeout_seconds
+			else
+				Result := a_seconds
+			end
+		ensure
+			positive: Result > 0
+			bounded: Result <= Unlimited_timeout_seconds
+		end
+
+	is_followed_redirect (a_status: INTEGER): BOOLEAN
+			-- Is `a_status' a redirect this client follows?
+		do
+			Result := a_status = 301 or a_status = 302 or a_status = 303 or a_status = 307 or a_status = 308
 		end
 
 	should_retry_response (a_response: SIMPLE_HTTP_RESPONSE): BOOLEAN
@@ -659,19 +842,6 @@ feature {NONE} -- Implementation
 			else
 				-- HTTP response - check status code
 				Result := retry_policy.should_retry_status (a_response.status)
-			end
-		end
-
-	configure_redirects (a_session: CURL_HTTP_CLIENT_SESSION)
-			-- Configure redirect settings on session.
-			-- Note: This depends on ISE library capabilities.
-		do
-			-- ISE CURL_HTTP_CLIENT_SESSION may have set_max_redirects
-			-- For now, rely on defaults (follow redirects up to 10)
-			-- Advanced redirect control requires checking ISE library features
-			if not follow_redirects then
-				-- Can't easily disable in ISE library, but this documents intent
-				-- Future: a_session.set_max_redirects (0) if available
 			end
 		end
 
@@ -708,6 +878,14 @@ feature {NONE} -- Implementation
 			end
 		end
 
+feature -- Constants
+
+	Default_body_maximum: INTEGER = 268_435_456
+			-- Default response body ceiling: 256 MiB
+
+	Body_maximum_ceiling: INTEGER = 1_073_741_824
+			-- Largest `body_maximum' the transport supports: 1 GiB
+
 feature {NONE} -- Constants
 
 	Default_timeout_seconds: INTEGER = 30
@@ -724,6 +902,16 @@ feature {NONE} -- Constants
 
 	Default_max_delay_ms: INTEGER = 30000
 			-- Default maximum retry delay in milliseconds
+
+	Unlimited_timeout_seconds: INTEGER = 2_000_000
+			-- Transport timeout standing for "no limit" (about 23 days;
+			-- its milliseconds still fit an INTEGER)
+
+invariant
+	positive_body_maximum: body_maximum > 0 and body_maximum <= Body_maximum_ceiling
+	non_negative_timeout: timeout >= 0
+	non_negative_connect_timeout: connect_timeout >= 0
+	non_negative_max_redirects: max_redirects >= 0
 
 note
 	copyright: "Copyright (c) 2024-2025, Larry Rix"

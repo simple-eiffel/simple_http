@@ -19,7 +19,8 @@
 
 ## Status
 
-✅ **Production Ready** — v1.0.0
+✅ **Production Ready** — v1.1.0
+- Request bodies, headers and URLs reach the server byte-for-byte (1.1.0: transport moved from ISE curl_http_client to simple_winhttp - see [CHANGELOG](CHANGELOG.md))
 - All HTTP methods (GET, POST, PUT, DELETE, HEAD, PATCH)
 - Authentication (Bearer, Basic, API key)
 - Automatic retry with exponential backoff
@@ -114,7 +115,9 @@ end
 |---------|-------------|
 | `set_timeout` | Request timeout |
 | `set_connect_timeout` | Connection timeout |
-| `set_max_redirects` | Max redirects to follow |
+| `set_max_redirects` | Max redirects to follow (0 disables) |
+| `set_follow_redirects` | Follow 301/302/303/307/308 or not |
+| `set_body_maximum` | Response body ceiling (default 256 MiB) |
 | `add_header` | Add custom header |
 | `add_query` | Add query parameter |
 
@@ -185,10 +188,34 @@ Set the `SIMPLE_LIBS` environment variable:
 export SIMPLE_LIBS=/path/to/simple/libraries
 ```
 
+## Transport
+
+Every exchange rides [simple_winhttp](https://github.com/simple-eiffel/simple_winhttp)
+(WinHTTP, part of every supported Windows - nothing to redistribute).
+
+- **Bodies are bytes.** What you pass to `post` / `put` / `patch` is what the
+  server receives - quotes, blanks, `% ^ & | < > !`, UTF-8 and megabyte bodies
+  included. `post_json` sends `Content-Type: application/json`.
+- **Default Content-Type.** A body sent without a Content-Type header goes as
+  `application/x-www-form-urlencoded` (the historical default); set the header
+  for anything else.
+- **URLs.** A well-formed URL travels verbatim; blanks, UTF-8 bytes and
+  ``" < > \ ^ ` { | }`` are percent-encoded (`SIMPLE_HTTP_WIRE.wire_url`), and the
+  fragment is dropped.
+- **Redirects.** 303 (and 301/302 after a POST) continue as GET; 307/308 repeat
+  the method and body. Authorization and Cookie never follow a redirect to
+  another origin.
+- **Failures are results.** Connection refused, timeout, TLS failure, an
+  oversized body, an unusable URL or a header that no header line can carry
+  come back as `has_error` with an `error_message` - never an exception.
+- **Timeouts.** `timeout` bounds each wait for the server; `connect_timeout`
+  bounds resolve + connect; 0 means no limit.
+
 ## Dependencies
 
 | Library | Purpose |
 |---------|---------|
+| simple_winhttp | HTTP/HTTPS transport (WinHTTP) |
 | simple_base64 | For Basic auth encoding |
 | simple_json | For JSON methods |
 

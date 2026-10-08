@@ -8,20 +8,48 @@ class
 	SIMPLE_HTTP_RESPONSE
 
 create
-	make_from_response
+	make_from_exchange,
+	make_failed
 
 feature {NONE} -- Initialization
 
-	make_from_response (a_response: HTTP_CLIENT_RESPONSE)
-			-- Create from raw HTTP response.
+	make_from_exchange (a_exchange: SIMPLE_WINHTTP_RESPONSE)
+			-- Create from what one transport exchange brought back: the
+			-- server's status, body bytes and raw headers when it answered,
+			-- or a transport failure (`error_occurred') when it did not.
 		do
-			status := a_response.status
-			body := a_response.body
-			raw_header := a_response.raw_header
-			error_occurred := a_response.error_occurred
-			error_message := a_response.error_message
+			status := a_exchange.status
+			raw_header := a_exchange.raw_headers
+			if a_exchange.is_exchanged then
+				body := a_exchange.body
+			else
+				error_occurred := True
+				error_message := {UTF_CONVERTER}.string_32_to_utf_8_string_8 (a_exchange.error)
+			end
 			create headers.make (10)
 			parse_headers
+		ensure
+			status_set: status = a_exchange.status
+			body_on_answer: a_exchange.is_exchanged implies (attached body as l_body and then l_body.same_string (a_exchange.body))
+			failure_flagged: error_occurred = not a_exchange.is_exchanged
+			failure_explained: error_occurred implies attached error_message
+		end
+
+	make_failed (a_message: READABLE_STRING_8)
+			-- Create for a request that never reached the server, because
+			-- `a_message' (an unusable URL or header, for instance).
+		require
+			explained: not a_message.is_empty
+		do
+			create {STRING_8} raw_header.make_empty
+			error_occurred := True
+			error_message := a_message
+			create headers.make (0)
+		ensure
+			no_status: status = 0
+			no_body: body = Void
+			failed: error_occurred
+			explained: attached error_message as l_message and then l_message.same_string (a_message)
 		end
 
 feature -- Access
@@ -326,6 +354,13 @@ feature {NONE} -- Implementation
 				l_pos := l_end + 1
 			end
 		end
+
+invariant
+	headers_attached: headers /= Void
+	raw_header_attached: raw_header /= Void
+	status_range: status = 0 or (status >= 100 and status <= 599)
+	failure_explained: error_occurred implies attached error_message
+	failure_has_no_status: error_occurred implies status = 0
 
 note
 	copyright: "Copyright (c) 2024-2025, Larry Rix"

@@ -84,7 +84,7 @@ feature -- GET Requests
 			client.get (a_url).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
-				Result := body
+				Result := body.to_string_8
 				logger.debug_log ("Response: " + last_status_code.out + " (" + body.count.out + " bytes)")
 			else
 				Result := ""
@@ -149,7 +149,7 @@ feature -- POST Requests
 			client.post (a_url, a_body).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
-				Result := body
+				Result := body.to_string_8
 				logger.debug_log ("Response: " + last_status_code.out)
 			else
 				Result := ""
@@ -169,7 +169,7 @@ feature -- POST Requests
 			client.post (a_url, a_json.to_json_string.to_string_8).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
-				Result := body
+				Result := body.to_string_8
 				logger.debug_log ("Response: " + last_status_code.out)
 			else
 				Result := ""
@@ -213,7 +213,7 @@ feature -- PUT/DELETE
 			client.put (a_url, a_body).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
-				Result := body
+				Result := body.to_string_8
 			else
 				Result := ""
 			end
@@ -230,7 +230,7 @@ feature -- PUT/DELETE
 			client.delete (a_url).do_nothing
 			update_status
 			if attached client.last_response as resp and then attached resp.body as body then
-				Result := body
+				Result := body.to_string_8
 			else
 				Result := ""
 			end

@@ -17,7 +17,7 @@
 			<void_safety support="all"/>
 		</capability>
 		<library name="base" location="$ISE_LIBRARY\library\base\base.ecf"/>
-		<library name="curl_http_client" location="$ISE_LIBRARY\contrib\library\network\http_client\curl_http_client.ecf"/>
+		<library name="simple_winhttp" location="$SIMPLE_EIFFEL/simple_winhttp/simple_winhttp.ecf"/>
 		<library name="simple_json" location="$SIMPLE_EIFFEL/simple_json/simple_json.ecf"/>
 		<library name="simple_base64" location="$SIMPLE_EIFFEL/simple_base64/simple_base64.ecf"/>
 		<library name="simple_logger" location="$SIMPLE_EIFFEL/simple_logger/simple_logger.ecf"/>

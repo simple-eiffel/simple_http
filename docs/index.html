@@ -40,6 +40,7 @@
                 <li>Authentication (Bearer, Basic, API key)</li>
                 <li>Automatic retry with exponential backoff</li>
                 <li>Cookie management and request interceptors</li>
+                <li>Byte-exact request bodies, headers and URLs over WinHTTP (simple_winhttp) - quotes, shell characters, UTF-8 and large bodies arrive as sent (1.1.0)</li>
             </ul>
         </section>
 
@@ -68,6 +69,9 @@ end</code></pre>
                 <tr><td><code>post (url, data)</code></td><td>POST request</td></tr>
                 <tr><td><code>put (url, data)</code></td><td>PUT request</td></tr>
                 <tr><td><code>delete (url)</code></td><td>DELETE request</td></tr>
+                <tr><td><code>patch (url, data)</code></td><td>PATCH request</td></tr>
+                <tr><td><code>post_json (url, object)</code></td><td>POST with <code>Content-Type: application/json</code></td></tr>
+                <tr><td><code>set_body_maximum</code></td><td>Response body ceiling (default 256 MiB)</td></tr>
                 <tr><td><code>set_bearer_token</code></td><td>Set Bearer auth</td></tr>
                 <tr><td><code>set_basic_auth</code></td><td>Set Basic auth</td></tr>
                 <tr><td><code>enable_retry</code></td><td>Enable retry</td></tr>
