@@ -19,7 +19,7 @@
 
 ## Status
 
-✅ **Production Ready** — v1.1.0
+✅ **Production Ready** — v1.1.1
 - Request bodies, headers and URLs reach the server byte-for-byte (1.1.0: transport moved from ISE curl_http_client to simple_winhttp - see [CHANGELOG](CHANGELOG.md))
 - All HTTP methods (GET, POST, PUT, DELETE, HEAD, PATCH)
 - Authentication (Bearer, Basic, API key)

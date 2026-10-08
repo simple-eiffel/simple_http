@@ -546,4 +546,45 @@ feature -- Tests: transport results (1.1.0)
 			assert_true ("reason kept", attached l_response.error_message as l_message and then l_message.has_substring ("timed out"))
 		end
 
+	test_repeated_set_cookie_all_reach_jar
+			-- Three Set-Cookie lines in one response: `header_values' keeps
+			-- all three and the cookie jar stores every cookie.
+		note
+			testing: "covers/{SIMPLE_HTTP_RESPONSE}.header_values", "covers/{SIMPLE_HTTP_COOKIE_JAR}.extract_cookies_from_response"
+		local
+			l_exchange: SIMPLE_WINHTTP_RESPONSE
+			l_response: SIMPLE_HTTP_RESPONSE
+			l_jar: SIMPLE_HTTP_COOKIE_JAR
+		do
+			create l_exchange.make (200, "", "HTTP/1.1 200 OK%R%NSet-Cookie: a=1; Path=/%R%Nset-cookie: b=2; HttpOnly%R%NSet-Cookie: c=3%R%NX-One: x%R%N%R%N")
+			create l_response.make_from_exchange (l_exchange)
+			assert_integers_equal ("three lines", 3, l_response.header_values ("SET-COOKIE").count)
+			assert_strings_equal ("first kept", "a=1; Path=/", l_response.header_values ("Set-Cookie").first)
+			assert_integers_equal ("single header", 1, l_response.header_values ("X-One").count)
+			assert_integers_equal ("absent header", 0, l_response.header_values ("X-None").count)
+			create l_jar.make
+			l_jar.extract_cookies_from_response (l_response)
+			assert_true ("a", l_jar.has_cookie ("a"))
+			assert_true ("b", l_jar.has_cookie ("b"))
+			assert_true ("c", l_jar.has_cookie ("c"))
+		end
+
+	test_cookies_round_trip_live
+			-- Live: needs SIMPLE_HTTP_COOKIE_PORT naming a local server that
+			-- sends 3 Set-Cookie headers and records the next request.
+			-- Skipped (passes) when the variable is unset.
+		local
+			l_http: SIMPLE_HTTP
+			l_response: SIMPLE_HTTP_RESPONSE
+		do
+			if attached (create {EXECUTION_ENVIRONMENT}).item ("SIMPLE_HTTP_COOKIE_PORT") as l_port then
+				create l_http.make
+				l_http.enable_cookies
+				l_response := l_http.get ("http://127.0.0.1:" + l_port.out + "/first")
+				assert_false ("first ok", l_response.error_occurred)
+				l_response := l_http.get ("http://127.0.0.1:" + l_port.out + "/second")
+				assert_false ("second ok", l_response.error_occurred)
+			end
+		end
+
 end

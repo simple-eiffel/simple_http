@@ -156,14 +156,13 @@ feature -- Element Change
 		end
 
 	extract_cookies_from_response (a_response: SIMPLE_HTTP_RESPONSE)
-			-- Extract and store cookies from response Set-Cookie headers.
-		local
-			l_header_value: detachable STRING
+			-- Extract and store cookies from every Set-Cookie header line
+			-- of `a_response' (a server may send several).
 		do
-			-- Check for Set-Cookie header
-			l_header_value := a_response.header ("Set-Cookie")
-			if attached l_header_value as h then
-				parse_set_cookie_header (h)
+			across
+				a_response.header_values ("Set-Cookie") as ic
+			loop
+				parse_set_cookie_header (ic)
 			end
 		end
 

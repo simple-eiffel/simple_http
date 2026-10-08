@@ -27,6 +27,7 @@ feature {NONE} -- Initialization
 				error_message := {UTF_CONVERTER}.string_32_to_utf_8_string_8 (a_exchange.error)
 			end
 			create headers.make (10)
+			create header_lists.make (10)
 			parse_headers
 		ensure
 			status_set: status = a_exchange.status
@@ -45,6 +46,7 @@ feature {NONE} -- Initialization
 			error_occurred := True
 			error_message := a_message
 			create headers.make (0)
+			create header_lists.make (0)
 		ensure
 			no_status: status = 0
 			no_body: body = Void
@@ -70,6 +72,21 @@ feature -- Access
 			-- Parsed headers
 
 feature -- Header access
+
+	header_values (a_name: STRING): ARRAYED_LIST [STRING]
+			-- Every value the server sent for `a_name' (case-insensitive),
+			-- one entry per header line, in arrival order. Empty when absent.
+			-- Use this for headers that repeat and must not be merged
+			-- (`Set-Cookie'); `header' keeps only the last line's value.
+		do
+			if attached header_lists.item (a_name.as_lower) as l_list then
+				create Result.make_from_iterable (l_list)
+			else
+				create Result.make (0)
+			end
+		ensure
+			result_attached: Result /= Void
+		end
 
 	header (a_name: STRING): detachable STRING
 			-- Get header value by name (case-insensitive).
@@ -299,6 +316,9 @@ feature -- JSON access
 
 feature {NONE} -- Implementation
 
+	header_lists: HASH_TABLE [ARRAYED_LIST [STRING], STRING]
+			-- Every value per lower-cased header name, one entry per line.
+
 	json_parsed: BOOLEAN
 			-- Has JSON been parsed?
 
@@ -310,6 +330,7 @@ feature {NONE} -- Implementation
 		local
 			l_pos, l_start, l_end, l_colon: INTEGER
 			l_line, l_key, l_val: STRING
+			l_new: ARRAYED_LIST [STRING]
 			n: INTEGER
 		do
 			n := raw_header.count
@@ -348,6 +369,13 @@ feature {NONE} -- Implementation
 							create l_val.make_empty
 						end
 						headers.force (l_val, l_key)
+						if attached header_lists.item (l_key) as l_list then
+							l_list.extend (l_val)
+						else
+							create l_new.make (1)
+							l_new.extend (l_val)
+							header_lists.force (l_new, l_key)
+						end
 					end
 				end
 

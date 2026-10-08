@@ -15,6 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Phase 2 & 3 enhancements: streaming, advanced options, fluent builders, interceptors, cookies
 - first commit
 
+## [1.1.1] - 2026-10-08
+
+### Fixed
+- **Every `Set-Cookie` header now reaches the cookie jar.** `SIMPLE_HTTP_RESPONSE`
+  parsed headers into a one-value-per-name table, so when a response carried
+  several `Set-Cookie` lines only the last survived. The transport
+  (SIMPLE_WINHTTP) was innocent: it hands over the raw header block intact.
+  Added `SIMPLE_HTTP_RESPONSE.header_values (name)` (every line, in order;
+  `header` is unchanged and still returns the last), and
+  `extract_cookies_from_response` now walks all of them. Verified against a
+  local server sending 3 Set-Cookie headers: the follow-up request carried
+  `Cookie: a=1; b=2; c=3`. Suite 28 of 28.
+
 ## [1.1.0] - 2026-10-08
 
 ### Fixed
@@ -90,5 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation and examples
 
 [Unreleased]: https://github.com/simple-eiffel/simple_http/compare/v1.1.0...HEAD
+[1.1.1]: https://github.com/simple-eiffel/simple_http/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/simple-eiffel/simple_http/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/simple-eiffel/simple_http/releases/tag/v1.0.0

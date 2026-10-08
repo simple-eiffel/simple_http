@@ -45,6 +45,8 @@ feature {NONE} -- Initialization
 			run_test (agent tests.test_unusable_url_is_a_result, "test_unusable_url_is_a_result")
 			run_test (agent tests.test_unclean_header_is_a_result, "test_unclean_header_is_a_result")
 			run_test (agent tests.test_response_from_exchange, "test_response_from_exchange")
+			run_test (agent tests.test_repeated_set_cookie_all_reach_jar, "test_repeated_set_cookie_all_reach_jar")
+			run_test (agent tests.test_cookies_round_trip_live, "test_cookies_round_trip_live")
 
 			print ("%N========================%N")
 			print ("Results: " + passed.out + " passed, " + failed.out + " failed%N")
