@@ -58,102 +58,93 @@ feature -- Tests
 	test_header_management
 			-- Test custom header management.
 		local
-			http: SIMPLE_HTTP
+			http: INSPECTABLE_HTTP
 		do
 			create http.make
-
 			http.add_header ("X-Custom", "value1")
-			assert_true ("header added", True)
-
+			assert_header (http, "X-Custom", "value1")
 			http.add_header ("X-Another", "value2")
-			assert_true ("multiple headers", True)
-
+			assert_header (http, "X-Another", "value2")
 			http.remove_header ("X-Custom")
-			assert_true ("header removed", True)
-
+			assert_false ("header removed", http.custom_headers.has ("X-Custom"))
+			assert_header (http, "X-Another", "value2")
 			http.add_header ("X-Temp", "temp")
 			http.clear_headers
-			assert_true ("headers cleared", True)
+			assert_true ("headers cleared", http.custom_headers.is_empty)
 		end
 
 	test_authentication_helpers
 			-- Test authentication helper methods.
 		local
-			http: SIMPLE_HTTP
+			http: INSPECTABLE_HTTP
 		do
 			create http.make
-
 			http.set_bearer_token ("my_jwt_token")
-			assert_true ("bearer token set", True)
-
+			assert_header (http, "Authorization", "Bearer my_jwt_token")
 			http.clear_headers
 			http.set_basic_auth ("user", "pass")
-			assert_true ("basic auth set", True)
-
+			assert_header (http, "Authorization", "Basic dXNlcjpwYXNz")
 			http.clear_headers
 			http.set_api_key ("X-API-Key", "secret123")
-			assert_true ("api key set", True)
-
+			assert_header (http, "X-API-Key", "secret123")
 			http.clear_headers
 			http.set_auth_header ("Custom auth-value")
-			assert_true ("auth header set", True)
+			assert_header (http, "Authorization", "Custom auth-value")
 		end
 
 	test_query_parameters
 			-- Test query parameter management.
 		local
-			http: SIMPLE_HTTP
+			http: INSPECTABLE_HTTP
 		do
 			create http.make
-
 			http.add_query ("page", "1")
-			assert_true ("param added", True)
-
+			assert_integers_equal ("param added", 1, http.query_params.count)
 			http.add_query ("limit", "20")
 			http.add_query ("sort", "name")
-			assert_true ("multiple params", True)
-
+			assert_integers_equal ("multiple params", 3, http.query_params.count)
 			http.remove_query ("sort")
-			assert_true ("param removed", True)
-
+			assert_false ("param removed", http.query_params.has ("sort"))
+			assert_integers_equal ("others stay", 2, http.query_params.count)
 			http.clear_queries
-			assert_true ("params cleared", True)
+			assert_true ("params cleared", http.query_params.is_empty)
 		end
 
 	test_content_type_helpers
 			-- Test content type helper methods.
 		local
-			http: SIMPLE_HTTP
+			http: INSPECTABLE_HTTP
 		do
 			create http.make
-
 			http.set_accept_json
-			assert_true ("accept json set", True)
-
+			assert_header (http, "Accept", "application/json")
 			http.set_content_type_json
-			assert_true ("content type json set", True)
-
+			assert_header (http, "Content-Type", "application/json")
 			http.clear_headers
 			http.set_content_type_form
-			assert_true ("content type form set", True)
+			assert_header (http, "Content-Type", "application/x-www-form-urlencoded")
 		end
 
 	test_url_building
 			-- Test URL building with query parameters.
 		local
-			http: SIMPLE_HTTP
+			http: INSPECTABLE_HTTP
+			l_url: STRING
 		do
 			create http.make
-
-			assert_true ("no params", True)
-
+			assert_strings_equal ("no params", "https://example.com/a", http.build_url ("https://example.com/a"))
 			http.add_query ("page", "1")
 			http.add_query ("limit", "20")
-			assert_true ("with params", True)
-
+			l_url := http.build_url ("https://example.com/a")
+			assert_string_contains ("starts the query", l_url, "https://example.com/a?")
+			assert_string_contains ("page", l_url, "page=1")
+			assert_string_contains ("limit", l_url, "limit=20")
+			assert_string_contains ("joined", l_url, "&")
 			http.clear_queries
 			http.add_query ("search", "hello world")
-			assert_true ("encoded spaces", True)
+			l_url := http.build_url ("https://example.com/a")
+			assert_string_contains ("value kept", l_url, "search=hello")
+			assert_false ("no raw space", l_url.has (' '))
 		end
 
 	test_retry_policy_default
@@ -306,25 +297,20 @@ feature -- Tests
 	test_interceptors
 			-- Test interceptor functionality.
 		local
-			http: SIMPLE_HTTP
+			http: INSPECTABLE_HTTP
 			logger: SIMPLE_HTTP_LOGGER_INTERCEPTOR
 		do
 			create http.make
 			create logger.make
-
 			http.add_interceptor (logger)
-			assert_true ("interceptor added", True)
-
+			assert_integers_equal ("interceptor added", 1, http.interceptors.count)
 			http.remove_interceptor (logger)
-			assert_true ("interceptor removed", True)
-
+			assert_true ("interceptor removed", http.interceptors.is_empty)
 			http.add_interceptor (logger)
 			http.clear_interceptors
-			assert_true ("interceptors cleared", True)
-
+			assert_true ("interceptors cleared", http.interceptors.is_empty)
 			logger.set_verbose (True)
 			logger.set_prefix ("[TEST] ")
-			assert_true ("logger configured", True)
 		end
 
 	test_client_cache
@@ -584,6 +570,17 @@ feature -- Tests: transport results (1.1.0)
 				assert_false ("first ok", l_response.error_occurred)
 				l_response := l_http.get ("http://127.0.0.1:" + l_port.out + "/second")
 				assert_false ("second ok", l_response.error_occurred)
+			end
+		end
+
+feature {NONE} -- Helpers
+
+	assert_header (a_http: INSPECTABLE_HTTP; a_name, a_value: STRING)
+			-- Assert that header `a_name' holds `a_value'.
+		do
+			assert_true (a_name + " set", a_http.custom_headers.has (a_name))
+			if attached a_http.custom_headers.item (a_name) as l_value then
+				assert_strings_equal (a_name, a_value, l_value)
 			end
 		end
 
